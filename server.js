@@ -30,6 +30,7 @@ app.get('/db-test', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+app.use(express.static('.' ));
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
