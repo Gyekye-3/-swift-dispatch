@@ -30,6 +30,25 @@ app.get('/db-test', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+const express = require('express');
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const app = express();
+
+// 1. Parsing and Static File Middleware (Put this FIRST)
+app.use(express.json());
+app.use(express.static('.')); // Serves index.html at root automatically
+
+// 2. PostgreSQL Pool Setup
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// NOTE: Make sure to REMOVE or COMMENT OUT any app.get('/', ...) route 
+// so it doesn't override index.html!
+
 app.use(express.static('.' ));
 
 app.listen(port, () => {
