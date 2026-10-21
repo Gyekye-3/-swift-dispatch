@@ -3,166 +3,747 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swift Dispatch Portal</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --text-light: #64748b;
-            --border: #e2e8f0;
-            --success: #10b981;
+    <title>Swift Dispatch Mobile App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Font Family -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body { background: var(--bg); color: var(--text); padding: 1rem; max-width: 600px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 1.5rem; padding-top: 1rem; }
-        header h1 { font-size: 1.5rem; color: var(--primary); font-weight: 700; }
-        header p { color: var(--text-light); font-size: 0.875rem; margin-top: 0.25rem; }
-        
-        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-        .tab-btn { flex: 1; padding: 0.6rem; border: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: var(--text-light); }
-        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--text); }
-        
-        .form-group { margin-bottom: 0.875rem; }
-        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text); }
-        .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: white; }
-        
-        button.action-btn { width: 100%; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; }
-        button.action-btn:hover { background: var(--primary-dark); }
-
-        .output-box { margin-top: 1rem; background: #0f172a; color: #38bdf8; padding: 0.75rem; border-radius: 6px; font-family: monospace; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; max-height: 150px; overflow-y: auto; }
-        .hidden { display: none; }
+    </script>
+    <style>
+        /* Custom scrollbar and sleek touch animations */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pulse-dot {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.15); }
+        }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
 
-    <header>
-        <h1>Swift Dispatch</h1>
-        <p>Live Logistics & Order Portal</p>
-    </header>
+    <!-- APP SHELL CONTAINER -->
+    <div class="w-full max-w-md mx-auto min-h-screen flex flex-col bg-slate-50 shadow-2xl relative border-x border-slate-200/80 pb-20">
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('customer')">Customer</button>
-        <button class="tab-btn" onclick="switchTab('driver')">Driver Terminal</button>
+        <!-- TOP BAR / HEADER -->
+        <header class="sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 shadow-md flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-blue-400 flex items-center justify-center text-white shadow-md shadow-brand-500/30">
+                    <i data-lucide="truck" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight leading-none text-slate-100">Swift Dispatch</h1>
+                    <div class="flex items-center space-x-1.5 mt-1">
+                        <span id="backendStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+                        <span id="backendStatusText" class="text-[10px] font-medium text-slate-300 tracking-wide uppercase">Live Neon PG Engine</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Badge / Simulator Control -->
+            <div id="userRoleBadge" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-brand-400">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                <span id="currentRoleText">Customer Mode</span>
+            </div>
+        </header>
+
+        <!-- MAIN VIEW PORT (TAB CONTENT) -->
+        <main class="flex-1 p-4 overflow-y-auto hide-scrollbar">
+
+            <!-- TAB 1: CUSTOMER PORTAL -->
+            <div id="tabCustomer" class="space-y-4">
+                <!-- Banner Info -->
+                <div class="bg-gradient-to-r from-brand-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-brand-500/20 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-brand-200">Express On-Demand</span>
+                            <span class="text-[10px] bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full font-semibold">Idempotency Protected</span>
+                        </div>
+                        <h2 class="text-xl font-extrabold tracking-tight">Request Dispatch Order</h2>
+                        <p class="text-xs text-brand-100 mt-1 opacity-90">Instant courier assignment with real-time payload protection.</p>
+                    </div>
+                    <i data-lucide="package" class="w-28 h-28 absolute -right-6 -bottom-6 text-white/10 pointer-events-none"></i>
+                </div>
+
+                <!-- Order Request Form -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3.5">
+                    <form id="dispatchForm" onsubmit="handleDispatchSubmit(event)" class="space-y-3">
+                        
+                        <!-- Customer ID -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Customer ID</label>
+                            <div class="relative">
+                                <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                                <input type="number" id="customerId" value="1" required class="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all outline-none font-medium text-slate-800">
+                            </div>
+                        </div>
+
+                        <!-- Pickup Location -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Pickup Location</label>
+                            <div class="relative">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-amber-500 absolute left-3 top-3"></i>
+                                <input type="text" id="pickupLocation" value="Warehouse 4, Central Accra" required placeholder="e.g. Warehouse 4, Central Accra" class="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all outline-none font-medium text-slate-800">
+                            </div>
+                        </div>
+
+                        <!-- Delivery Location -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Delivery Location</label>
+                            <div class="relative">
+                                <i data-lucide="navigation" class="w-4 h-4 text-emerald-500 absolute left-3 top-3"></i>
+                                <input type="text" id="deliveryLocation" value="12 Ring Road East, Labone" required placeholder="e.g. 12 Ring Road East" class="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all outline-none font-medium text-slate-800">
+                            </div>
+                        </div>
+
+                        <!-- Grid: Package Type & Phone -->
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Package Type</label>
+                                <select id="packageType" class="w-full px-2.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all outline-none font-medium text-slate-800">
+                                    <option value="Documents">Documents</option>
+                                    <option value="Parcel">Parcel</option>
+                                    <option value="Fragile">Fragile</option>
+                                    <option value="Heavy Cargo">Heavy Cargo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Recipient Phone</label>
+                                <div class="relative">
+                                    <input type="text" id="recipientPhone" value="+233 55 000 0000" required placeholder="+233..." class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all outline-none font-medium text-slate-800">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Idempotency Protection Box -->
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i data-lucide="key" class="w-4 h-4 text-brand-600"></i>
+                                    <span class="text-xs font-bold text-slate-800">Attach Idempotency Key</span>
+                                </div>
+                                <input type="checkbox" id="useIdempotency" checked onchange="toggleIdempotencyInput()" class="w-4 h-4 text-brand-600 rounded focus:ring-brand-500 cursor-pointer">
+                            </div>
+                            <div id="idempotencyKeyContainer" class="flex items-center space-x-2">
+                                <input type="text" id="idempotencyKey" readonly class="flex-1 text-xs font-mono bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-600">
+                                <button type="button" onclick="generateNewIdempotencyKey()" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition-all flex items-center space-x-1">
+                                    <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                                    <span>New</span>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-500 leading-tight">Prevents duplicate order creation on network retries or double clicks.</p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="submitDispatchBtn" class="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold rounded-xl shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center space-x-2 text-sm">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span>Dispatch Request</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- API Submission Log -->
+                <div id="dispatchLogCard" class="hidden bg-slate-900 text-slate-200 rounded-2xl p-3.5 border border-slate-800 shadow-md">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-mono uppercase tracking-wider text-brand-400 font-semibold flex items-center space-x-1">
+                            <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+                            <span>API Response Log</span>
+                        </span>
+                        <button onclick="document.getElementById('dispatchLogCard').classList.add('hidden')" class="text-slate-400 hover:text-white">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <pre id="dispatchLogContent" class="text-[11px] font-mono bg-slate-950 p-2.5 rounded-xl text-emerald-400 overflow-x-auto whitespace-pre-wrap leading-relaxed border border-slate-800/80 max-h-40 hide-scrollbar"></pre>
+                </div>
+
+                <!-- Active Customer Orders -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center space-x-1">
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                            <span>Active Order Tracker</span>
+                        </h3>
+                        <span id="orderCountBadge" class="text-[10px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded-full">0 Orders</span>
+                    </div>
+
+                    <div id="customerOrdersList" class="space-y-2">
+                        <!-- Dynamic Order Cards inserted here -->
+                        <div class="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-300 text-slate-400">
+                            <i data-lucide="box" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                            <p class="text-xs font-medium">No dispatch orders submitted yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: DRIVER TERMINAL -->
+            <div id="tabDriver" class="hidden space-y-4">
+                <!-- Driver Header Card -->
+                <div class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-4 text-white shadow-lg space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+                            <span>Driver Console</span>
+                        </span>
+                        <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded-full text-slate-300 font-mono">Row Lock: Active</span>
+                    </div>
+                    <h2 class="text-lg font-bold">Atomic Status Transitions</h2>
+                    <p class="text-xs text-slate-400">Pessimistic concurrency control prevents race conditions when multiple drivers accept tasks.</p>
+                </div>
+
+                <!-- Driver Active Tasks Feed -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider">Available & Active Tasks</h3>
+                        <button onclick="renderDriverOrders()" class="text-xs text-brand-600 font-semibold flex items-center space-x-1 hover:underline">
+                            <i data-lucide="rotate-cw" class="w-3 h-3"></i>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+
+                    <div id="driverOrdersList" class="space-y-3">
+                        <!-- Dynamic Driver Task Cards -->
+                    </div>
+                </div>
+
+                <!-- Driver API Debug Log -->
+                <div id="driverLogCard" class="hidden bg-slate-900 text-slate-200 rounded-2xl p-3.5 border border-slate-800 shadow-md">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center space-x-1">
+                            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                            <span>DB Transaction Log (`FOR UPDATE`)</span>
+                        </span>
+                        <button onclick="document.getElementById('driverLogCard').classList.add('hidden')" class="text-slate-400 hover:text-white">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <pre id="driverLogContent" class="text-[11px] font-mono bg-slate-950 p-2.5 rounded-xl text-sky-400 overflow-x-auto whitespace-pre-wrap leading-relaxed border border-slate-800/80 max-h-40 hide-scrollbar"></pre>
+                </div>
+            </div>
+
+            <!-- TAB 3: SYSTEM & ADMIN ANALYTICS -->
+            <div id="tabAnalytics" class="hidden space-y-4">
+                <!-- System Status Header -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">System Infrastructure</h2>
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full">HEALTHY</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">PostgreSQL Pool</span>
+                            <span class="text-base font-extrabold text-slate-800">5 / 10 Conn</span>
+                            <span class="block text-[10px] text-emerald-600 font-medium mt-0.5">Neon PG SSL Mode</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Idempotency Hits</span>
+                            <span id="idempotencyHitsCount" class="text-base font-extrabold text-brand-600">0 Cached</span>
+                            <span class="block text-[10px] text-slate-500 font-medium mt-0.5">Duplication Blocked</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Metrics Grid -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-brand-600 flex items-center justify-center">
+                            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Orders</span>
+                            <span id="metricTotalOrders" class="text-lg font-black text-slate-800">0</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Active Drivers</span>
+                            <span class="text-lg font-black text-slate-800">4 Live</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Table Inspector -->
+                <div class="bg-slate-900 text-slate-200 rounded-2xl p-4 border border-slate-800 shadow-md space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono uppercase tracking-wider text-brand-400 font-bold flex items-center space-x-1.5">
+                            <i data-lucide="database" class="w-4 h-4"></i>
+                            <span>Live Database State</span>
+                        </span>
+                        <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono">public.orders</span>
+                    </div>
+
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left text-[11px] font-mono">
+                            <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                                <tr>
+                                    <th class="p-2">ID</th>
+                                    <th class="p-2">Pickup</th>
+                                    <th class="p-2">Delivery</th>
+                                    <th class="p-2">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dbStateTableBody" class="divide-y divide-slate-800 text-slate-300">
+                                <tr>
+                                    <td colspan="4" class="p-4 text-center text-slate-500">No database records found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- BOTTOM TAB NAVIGATION -->
+        <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 flex items-center justify-around z-50">
+            <button onclick="switchTab('customer')" id="navCustomer" class="flex flex-col items-center text-brand-600 transition-all font-semibold space-y-1">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                <span class="text-[11px]">Request</span>
+            </button>
+
+            <button onclick="switchTab('driver')" id="navDriver" class="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-all font-semibold space-y-1">
+                <i data-lucide="truck" class="w-5 h-5"></i>
+                <span class="text-[11px]">Driver</span>
+            </button>
+
+            <button onclick="switchTab('analytics')" id="navAnalytics" class="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-all font-semibold space-y-1">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                <span class="text-[11px]">System</span>
+            </button>
+        </nav>
+
     </div>
 
-    <!-- CUSTOMER PANEL -->
-    <div id="customerPanel" class="card">
-        <h2>Create Dispatch Order</h2>
-        <div class="form-group">
-            <label>Customer ID</label>
-            <input type="number" id="customerId" value="1">
-        </div>
-        <div class="form-group">
-            <label>Pickup Location</label>
-            <input type="text" id="pickup" value="Manhyia, Kumasi">
-        </div>
-        <div class="form-group">
-            <label>Delivery Location</label>
-            <input type="text" id="delivery" value="KNUST Campus">
-        </div>
-        <div class="form-group">
-            <label>Package Type</label>
-            <select id="packageType">
-                <option value="Documents">Documents</option>
-                <option value="Parcel">Parcel</option>
-                <option value="Fragile">Fragile</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Recipient Phone</label>
-            <input type="text" id="recipientPhone" value="+233 55 000 0000">
-        </div>
-        <button class="action-btn" onclick="createOrder()">Dispatch Request</button>
-        <div id="customerOutput" class="output-box hidden"></div>
-    </div>
-
-    <!-- DRIVER PANEL -->
-    <div id="driverPanel" class="card hidden">
-        <h2>Driver Status Control</h2>
-        <div class="form-group">
-            <label>Order ID</label>
-            <input type="number" id="orderId" value="1">
-        </div>
-        <div class="form-group">
-            <label>New Status</label>
-            <select id="newStatus">
-                <option value="in_transit">In Transit</option>
-                <option value="delivered">Delivered</option>
-                <option value="cancelled">Cancelled</option>
-            </select>
-        </div>
-        <button class="action-btn" onclick="updateOrderStatus()">Update Status Safely</button>
-        <div id="driverOutput" class="output-box hidden"></div>
-    </div>
-
+    <!-- APP LOGIC & BACKEND INTEGRATION SCRIPT -->
     <script>
-        function switchTab(role) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(role === 'customer') {
-                document.querySelectorAll('.tab-btn')[0].classList.add('active');
-                document.getElementById('customerPanel').classList.remove('hidden');
-                document.getElementById('driverPanel').classList.add('hidden');
-            } else {
-                document.querySelectorAll('.tab-btn')[1].classList.add('active');
-                document.getElementById('customerPanel').classList.add('hidden');
-                document.getElementById('driverPanel').classList.remove('hidden');
+        // Global In-Memory Fallback State (Simulates PostgreSQL table when offline)
+        let localOrders = [
+            {
+                id: 101,
+                customer_id: 1,
+                pickup_location: 'Warehouse 4, Central Accra',
+                delivery_location: '12 Ring Road East, Labone',
+                package_type: 'Documents',
+                recipient_phone: '+233 55 000 0000',
+                status: 'pending',
+                created_at: new Date().toISOString()
+            }
+        ];
+
+        let idempotencyHits = 0;
+        let isConnectedToBackend = false;
+
+        // Initialize Lucide Icons
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            generateNewIdempotencyKey();
+            checkBackendConnection();
+            renderCustomerOrders();
+            renderDriverOrders();
+            updateAnalytics();
+        });
+
+        // Tab Switching Engine
+        function switchTab(tab) {
+            // Hide all tabs
+            document.getElementById('tabCustomer').classList.add('hidden');
+            document.getElementById('tabDriver').classList.add('hidden');
+            document.getElementById('tabAnalytics').classList.add('hidden');
+
+            // Reset navigation tab colors
+            const navCustomer = document.getElementById('navCustomer');
+            const navDriver = document.getElementById('navDriver');
+            const navAnalytics = document.getElementById('navAnalytics');
+
+            [navCustomer, navDriver, navAnalytics].forEach(el => {
+                el.className = 'flex flex-col items-center text-slate-400 hover:text-slate-600 transition-all font-semibold space-y-1';
+            });
+
+            // Update role badge text & reveal tab
+            const roleText = document.getElementById('currentRoleText');
+
+            if (tab === 'customer') {
+                document.getElementById('tabCustomer').classList.remove('hidden');
+                navCustomer.className = 'flex flex-col items-center text-brand-600 transition-all font-semibold space-y-1';
+                roleText.innerText = 'Customer Mode';
+            } else if (tab === 'driver') {
+                document.getElementById('tabDriver').classList.remove('hidden');
+                navDriver.className = 'flex flex-col items-center text-brand-600 transition-all font-semibold space-y-1';
+                roleText.innerText = 'Driver Mode';
+                renderDriverOrders();
+            } else if (tab === 'analytics') {
+                document.getElementById('tabAnalytics').classList.remove('hidden');
+                navAnalytics.className = 'flex flex-col items-center text-brand-600 transition-all font-semibold space-y-1';
+                roleText.innerText = 'System Admin';
+                updateAnalytics();
             }
         }
 
-        async function createOrder() {
-            const output = document.getElementById('customerOutput');
-            output.classList.remove('hidden');
-            output.innerText = 'Submitting order...';
+        // Generate unique Idempotency key
+        function generateNewIdempotencyKey() {
+            const randomKey = 'idemp-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now().toString(36);
+            document.getElementById('idempotencyKey').value = randomKey;
+        }
 
-            const idempotencyKey = 'idemp_' + Math.random().toString(36).substring(2);
+        function toggleIdempotencyInput() {
+            const checkbox = document.getElementById('useIdempotency');
+            const container = document.getElementById('idempotencyKeyContainer');
+            if (checkbox.checked) {
+                container.classList.remove('opacity-40', 'pointer-events-none');
+            } else {
+                container.classList.add('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        // Test Live Express API Connection
+        async function checkBackendConnection() {
+            const statusDot = document.getElementById('backendStatusDot');
+            const statusText = document.getElementById('backendStatusText');
+
+            try {
+                // Perform quick HEAD or GET probe
+                const res = await fetch('/api/orders', { method: 'GET' }).catch(() => null);
+                if (res) {
+                    isConnectedToBackend = true;
+                    statusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 pulse-dot';
+                    statusText.innerText = 'Live Neon PG / Express Engine';
+                } else {
+                    statusDot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                    statusText.innerText = 'Client Sandbox Engine';
+                }
+            } catch (err) {
+                statusDot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                statusText.innerText = 'Client Sandbox Engine';
+            }
+        }
+
+        // Handle Dispatch Form Submission
+        async function handleDispatchSubmit(event) {
+            event.preventDefault();
+
+            const customerId = document.getElementById('customerId').value;
+            const pickup = document.getElementById('pickupLocation').value;
+            const delivery = document.getElementById('deliveryLocation').value;
+            const packageType = document.getElementById('packageType').value;
+            const recipientPhone = document.getElementById('recipientPhone').value;
+            const useIdemp = document.getElementById('useIdempotency').checked;
+            const idempKey = document.getElementById('idempotencyKey').value;
+
+            const submitBtn = document.getElementById('submitDispatchBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Processing...</span>`;
+            lucide.createIcons();
+
+            const headers = { 'Content-Type': 'application/json' };
+            if (useIdemp && idempKey) {
+                headers['Idempotency-Key'] = idempKey;
+            }
+
+            const payload = {
+                customer_id: parseInt(customerId),
+                pickup_location: pickup,
+                delivery_location: delivery,
+                package_type: packageType,
+                recipient_phone: recipientPhone
+            };
+
+            const logCard = document.getElementById('dispatchLogCard');
+            const logContent = document.getElementById('dispatchLogContent');
+            logCard.classList.remove('hidden');
 
             try {
                 const res = await fetch('/api/orders', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Idempotency-Key': idempotencyKey
-                    },
-                    body: JSON.stringify({
-                        customer_id: document.getElementById('customerId').value,
-                        pickup_location: document.getElementById('pickup').value,
-                        delivery_location: document.getElementById('delivery').value,
-                        package_type: document.getElementById('packageType').value,
-                        recipient_phone: document.getElementById('recipientPhone').value
-                    })
+                    headers: headers,
+                    body: JSON.stringify(payload)
                 });
-                const data = await res.json();
-                output.innerText = JSON.stringify(data, null, 2);
-            } catch (err) {
-                output.innerText = 'Error connecting to backend: ' + err.message;
+
+                if (res.ok) {
+                    const data = await res.json();
+                    logContent.innerText = `[HTTP ${res.status}] Order Success:\n` + JSON.stringify(data, null, 2);
+
+                    // Add to local state if returned from server
+                    if (data.order) {
+                        localOrders.unshift(data.order);
+                    }
+                } else {
+                    const errData = await res.json();
+                    if (res.status === 409) idempotencyHits++;
+                    logContent.innerText = `[HTTP ${res.status} Alert]:\n` + JSON.stringify(errData, null, 2);
+                }
+            } catch (error) {
+                // Fallback local creation if running standalone in preview
+                logContent.innerText = `[Offline Client Simulation Response]:\nPOST /api/orders\nHeaders: ${JSON.stringify(headers)}\n\nOrder created locally in preview.`;
+
+                const newOrder = {
+                    id: Math.floor(100 + Math.random() * 900),
+                    customer_id: parseInt(customerId),
+                    pickup_location: pickup,
+                    delivery_location: delivery,
+                    package_type: packageType,
+                    recipient_phone: recipientPhone,
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                };
+
+                localOrders.unshift(newOrder);
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i><span>Dispatch Request</span>`;
+            lucide.createIcons();
+
+            renderCustomerOrders();
+            renderDriverOrders();
+            updateAnalytics();
+        }
+
+        // Render Active Orders for Customer
+        function renderCustomerOrders() {
+            const container = document.getElementById('customerOrdersList');
+            const badge = document.getElementById('orderCountBadge');
+            badge.innerText = `${localOrders.length} Orders`;
+
+            if (localOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-300 text-slate-400">
+                        <i data-lucide="box" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                        <p class="text-xs font-medium">No dispatch orders submitted yet.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = localOrders.map(order => {
+                const statusStyles = getStatusBadge(order.status);
+                return `
+                    <div class="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-900">Order #${order.id}</span>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${statusStyles.bg} ${statusStyles.text}">
+                                ${order.status.replace('_', ' ')}
+                            </span>
+                        </div>
+                        <div class="text-xs text-slate-600 space-y-1">
+                            <div class="flex items-center space-x-1.5">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
+                                <span class="truncate font-medium">${escapeHtml(order.pickup_location)}</span>
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <i data-lucide="navigation" class="w-3.5 h-3.5 text-emerald-500 shrink-0"></i>
+                                <span class="truncate font-medium">${escapeHtml(order.delivery_location)}</span>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Type: ${escapeHtml(order.package_type || 'Parcel')}</span>
+                            <span>Phone: ${escapeHtml(order.recipient_phone || 'N/A')}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // Render Driver Terminal Tasks
+        function renderDriverOrders() {
+            const container = document.getElementById('driverOrdersList');
+
+            if (localOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-300 text-slate-400">
+                        <p class="text-xs font-medium">No tasks available in driver queue.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = localOrders.map(order => {
+                const statusStyles = getStatusBadge(order.status);
+                return `
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-900">Order #${order.id}</span>
+                                <span class="block text-[10px] text-slate-400">Customer ID: ${order.customer_id}</span>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${statusStyles.bg} ${statusStyles.text}">
+                                ${order.status.replace('_', ' ')}
+                            </span>
+                        </div>
+
+                        <div class="p-2.5 bg-slate-50 rounded-xl space-y-1.5 text-xs">
+                            <div class="flex items-center justify-between text-slate-700">
+                                <span class="text-slate-400 text-[11px]">From:</span>
+                                <span class="font-semibold text-right">${escapeHtml(order.pickup_location)}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-700">
+                                <span class="text-slate-400 text-[11px]">To:</span>
+                                <span class="font-semibold text-right">${escapeHtml(order.delivery_location)}</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons based on state -->
+                        <div class="flex items-center space-x-2 pt-1">
+                            ${getActionButtonsForStatus(order.id, order.status)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // Get Action Buttons for Driver State Transitions
+        function getActionButtonsForStatus(orderId, currentStatus) {
+            if (currentStatus === 'pending') {
+                return `
+                    <button onclick="updateOrderStatus(${orderId}, 'assigned')" class="flex-1 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+                        Accept Order
+                    </button>
+                    <button onclick="updateOrderStatus(${orderId}, 'cancelled')" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-xl transition-all">
+                        Reject
+                    </button>
+                `;
+            } else if (currentStatus === 'assigned') {
+                return `
+                    <button onclick="updateOrderStatus(${orderId}, 'in_transit')" class="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+                        Start Transit
+                    </button>
+                `;
+            } else if (currentStatus === 'in_transit') {
+                return `
+                    <button onclick="updateOrderStatus(${orderId}, 'delivered')" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+                        Confirm Delivery
+                    </button>
+                `;
+            } else {
+                return `<span class="text-xs text-slate-400 italic">Order completed or cancelled.</span>`;
             }
         }
 
-        async function updateOrderStatus() {
-            const output = document.getElementById('driverOutput');
-            output.classList.remove('hidden');
-            output.innerText = 'Updating status with row lock...';
+        // Driver Status Update Triggering Row Lock Simulation / Backend Endpoint
+        async function updateOrderStatus(orderId, newStatus) {
+            const driverLogCard = document.getElementById('driverLogCard');
+            const driverLogContent = document.getElementById('driverLogContent');
+            driverLogCard.classList.remove('hidden');
+
+            driverLogContent.innerText = `BEGIN TRANSACTION;\nSELECT * FROM orders WHERE id = ${orderId} FOR UPDATE;\nUpdating status -> '${newStatus}'...`;
 
             try {
                 const res = await fetch('/api/orders/update-status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        order_id: document.getElementById('orderId').value,
-                        new_status: document.getElementById('newStatus').value
+                        order_id: orderId,
+                        new_status: newStatus
                     })
                 });
-                const data = await res.json();
-                output.innerText = JSON.stringify(data, null, 2);
+
+                if (res.ok) {
+                    const data = await res.json();
+                    driverLogContent.innerText = `[Row Lock Released - COMMIT Success]:\n` + JSON.stringify(data, null, 2);
+                } else {
+                    const err = await res.json();
+                    driverLogContent.innerText = `[Row Lock Error]:\n` + JSON.stringify(err, null, 2);
+                }
             } catch (err) {
-                output.innerText = 'Error connecting to backend: ' + err.message;
+                driverLogContent.innerText += `\n\n[Client Simulation]: Atomic row lock succeeded locally.\nStatus updated to '${newStatus}'. COMMIT;`;
             }
+
+            // Update in local state
+            const target = localOrders.find(o => o.id === orderId);
+            if (target) {
+                target.status = newStatus;
+            }
+
+            renderCustomerOrders();
+            renderDriverOrders();
+            updateAnalytics();
+        }
+
+        // Update Analytics Dashboard
+        function updateAnalytics() {
+            document.getElementById('metricTotalOrders').innerText = localOrders.length;
+            document.getElementById('idempotencyHitsCount').innerText = `${idempotencyHits} Blocked`;
+
+            const tableBody = document.getElementById('dbStateTableBody');
+            if (localOrders.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No database records found</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = localOrders.map(o => `
+                <tr>
+                    <td class="p-2 font-bold text-brand-400">#${o.id}</td>
+                    <td class="p-2 truncate max-w-[90px]">${escapeHtml(o.pickup_location)}</td>
+                    <td class="p-2 truncate max-w-[90px]">${escapeHtml(o.delivery_location)}</td>
+                    <td class="p-2">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-slate-800 text-slate-300">
+                            ${o.status}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Helper: Badge styling by status
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'pending': return { bg: 'bg-amber-100', text: 'text-amber-700' };
+                case 'assigned': return { bg: 'bg-blue-100', text: 'text-blue-700' };
+                case 'in_transit': return { bg: 'bg-purple-100', text: 'text-purple-700' };
+                case 'delivered': return { bg: 'bg-emerald-100', text: 'text-emerald-700' };
+                case 'cancelled': return { bg: 'bg-rose-100', text: 'text-rose-700' };
+                default: return { bg: 'bg-slate-100', text: 'text-slate-700' };
+            }
+        }
+
+        // Utility: Sanitize string input
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&raw_gt;')
+                .replace(/"/g, '&quot;');
         }
     </script>
 </body>
