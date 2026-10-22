@@ -2,241 +2,671 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swift Dispatch - Logistics & Delivery</title>
-    <!-- Leaflet CSS for Map -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Swift Dispatch - Logistics & Delivery (Kumasi)</title>
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' },
+                        accent: { 500: '#10b981', 600: '#059669' }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #f8fafc; color: #0f172a; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        #map { width: 100%; height: 100%; z-index: 1; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .leaflet-container { font-family: 'Inter', sans-serif !important; }
         
-        /* Header Navigation */
-        .navbar { background: #1e293b; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .brand { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .nav-tabs { display: flex; gap: 8px; }
-        .tab-btn { background: #334155; color: #cbd5e1; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; }
-        .tab-btn.active { background: #2563eb; color: white; }
-
-        /* Main Container */
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
-        
-        /* Map Container */
-        #map { flex: 1; width: 100%; min-height: 250px; z-index: 1; }
-
-        /* Booking Overlay Panel */
-        .panel { background: white; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 2; max-height: 60vh; overflow-y: auto; }
-        
-        .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
-        input:focus { border-color: #2563eb; }
-
-        .route-box { background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 12px; }
-        .price-tag { font-size: 20px; font-weight: 800; color: #16a34a; text-align: right; }
-
-        .btn-pay { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
-        .btn-pay:hover { background: #1d4ed8; }
-
-        /* Views */
-        .view-section { display: none; }
-        .view-section.active { display: block; }
-        
-        /* Admin / Driver Management */
-        .admin-card { background: white; margin: 15px; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .driver-list-item { padding: 10px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        /* Pulse Animation for Live Dispatch Pin */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .pulse-marker { animation: pulse-ring 2s infinite ease-in-out; }
     </style>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- Top Navigation Bar -->
-    <div class="navbar">
-        <div class="brand">⚡ Swift Dispatch</div>
-        <div class="nav-tabs">
-            <button class="tab-btn active" id="tab-cust-btn" onclick="switchTab('customer')">Customer</button>
-            <button class="tab-btn" id="tab-admin-btn" onclick="switchTab('admin')">Admin & Drivers</button>
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900 border-b border-slate-800 text-white px-4 py-3 z-30 flex items-center justify-between shrink-0 shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-bolt text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-base leading-none tracking-tight flex items-center gap-1.5">
+                    SWIFT DISPATCH
+                    <span class="bg-blue-500/20 text-blue-400 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border border-blue-500/30">Kumasi</span>
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">Ashanti Region On-Demand Delivery</p>
+            </div>
         </div>
-    </div>
 
-    <!-- Customer Dispatch View -->
-    <div id="customer-view" class="main-content view-section active">
-        <!-- Interactive Kumasi Map -->
-        <div id="map"></div>
+        <!-- Navigation Tabs -->
+        <nav class="flex bg-slate-800 p-1 rounded-xl border border-slate-700/60">
+            <button id="nav-customer" onclick="switchTab('customer')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-blue-600 text-white shadow-md">
+                <i class="fa-solid fa-box-fast mr-1.5"></i>Order
+            </button>
+            <button id="nav-admin" onclick="switchTab('admin')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-chart-line mr-1.5"></i>Admin & Drivers
+            </button>
+        </nav>
+    </header>
 
-        <!-- Booking Form Panel -->
-        <div class="panel">
-            <div class="route-box">
-                <div class="form-group">
-                    <label>Your Email Address</label>
-                    <input type="email" id="cust-email" placeholder="e.g. felix@gmail.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Your Phone Number</label>
-                    <input type="tel" id="cust-phone" placeholder="e.g. 0598211347" required>
-                </div>
-                <div class="form-group">
-                    <label>Pickup Location</label>
-                    <input type="text" id="pickup-loc" value="Manhyia, Kumasi" required>
-                </div>
-                <div class="form-group">
-                    <label>Delivery Destination</label>
-                    <input type="text" id="dropoff-loc" placeholder="e.g. KNUST Campus, Kumasi" value="KNUST, Kumasi" required>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <div><span style="font-size: 12px; color: #64748b;">Estimated Delivery Fee</span></div>
-                    <div class="price-tag">GHS <span id="calc-price">25.00</span></div>
+    <!-- App Content Wrapper -->
+    <main class="flex-1 relative overflow-hidden flex flex-col">
+
+        <!-- ==================== CUSTOMER VIEW ==================== -->
+        <div id="view-customer" class="absolute inset-0 flex flex-col md:flex-row h-full w-full z-10">
+            
+            <!-- Map Section -->
+            <div class="relative flex-1 h-[45%] md:h-full w-full bg-slate-800">
+                <div id="map"></div>
+                
+                <!-- Live Status Badge on Map -->
+                <div class="absolute top-3 left-3 z-[1000] glass-panel px-3 py-1.5 rounded-full shadow-lg border border-white/40 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-xs font-bold text-slate-700">Kumasi Active Dispatch Grid</span>
                 </div>
             </div>
 
-            <button type="button" class="btn-pay" onclick="triggerPaystackPayment()">PAY WITH MOBILE MONEY</button>
-        </div>
-    </div>
+            <!-- Booking & Pricing Form Drawer -->
+            <div class="w-full md:w-[420px] lg:w-[460px] glass-panel border-t md:border-t-0 md:border-l border-slate-200 flex flex-col h-[55%] md:h-full shadow-2xl z-20">
+                
+                <div class="p-4 md:p-6 overflow-y-auto custom-scroll flex-1 space-y-4">
+                    
+                    <!-- Form Title -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Request Instant Pick-Up</h2>
+                            <p class="text-xs text-slate-500">Distance-calculated fair rates across Kumasi</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 text-xs font-bold border border-blue-200">
+                            GHS 2.50 / km
+                        </span>
+                    </div>
 
-    <!-- Admin & Drivers View -->
-    <div id="admin-view" class="view-section">
-        <div class="admin-card">
-            <h3>Register New Driver</h3>
-            <form id="driver-reg-form" onsubmit="registerDriver(event)" style="margin-top: 10px;">
-                <div class="form-group">
-                    <label>Driver Full Name</label>
-                    <input type="text" id="drv-name" placeholder="Kwame Mensah" required>
-                </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" id="drv-phone" placeholder="024XXXXXXX" required>
-                </div>
-                <div class="form-group">
-                    <label>Motorbike / Vehicle Reg Number</label>
-                    <input type="text" id="drv-plate" placeholder="M-24-AS 1024" required>
-                </div>
-                <button type="submit" class="btn-pay" style="background: #16a34a; padding: 10px;">Register Driver</button>
-            </form>
-        </div>
+                    <!-- Pickup & Dropoff Presets -->
+                    <div class="space-y-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                        <!-- Pickup Location -->
+                        <div>
+                            <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 mb-1">
+                                <i class="fa-solid fa-circle-dot text-emerald-500 text-xs"></i> Pickup Location
+                            </label>
+                            <select id="pickup-preset" onchange="handleLocationChange()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm">
+                                <!-- Options dynamically rendered -->
+                            </select>
+                        </div>
 
-        <div class="admin-card">
-            <h3>Registered Drivers</h3>
-            <div id="drivers-container">
-                <p style="color: #64748b; font-size: 13px; margin-top: 8px;">No drivers registered yet.</p>
+                        <div class="flex justify-center -my-2 relative z-10">
+                            <button onclick="swapLocations()" class="w-7 h-7 rounded-full bg-white border border-slate-300 shadow hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-transform active:scale-95">
+                                <i class="fa-solid fa-arrows-up-down text-xs"></i>
+                            </button>
+                        </div>
+
+                        <!-- Dropoff Destination -->
+                        <div>
+                            <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 mb-1">
+                                <i class="fa-solid fa-location-dot text-rose-500 text-xs"></i> Delivery Destination
+                            </label>
+                            <select id="dropoff-preset" onchange="handleLocationChange()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm">
+                                <!-- Options dynamically rendered -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Package Category Selection -->
+                    <div>
+                        <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 block">Package Size & Type</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="setPackageType('small', 1.0)" id="pkg-small" class="pkg-btn p-2.5 rounded-xl border border-blue-500 bg-blue-50/70 text-blue-700 flex flex-col items-center justify-center text-center transition-all">
+                                <i class="fa-solid fa-envelope text-base mb-1"></i>
+                                <span class="text-xs font-bold">Envelope</span>
+                                <span class="text-[10px] text-slate-500">1.0x Rate</span>
+                            </button>
+                            <button type="button" onclick="setPackageType('medium', 1.25)" id="pkg-medium" class="pkg-btn p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 flex flex-col items-center justify-center text-center transition-all hover:bg-slate-50">
+                                <i class="fa-solid fa-box text-base mb-1"></i>
+                                <span class="text-xs font-bold">Medium Box</span>
+                                <span class="text-[10px] text-slate-500">1.25x Rate</span>
+                            </button>
+                            <button type="button" onclick="setPackageType('heavy', 1.6)" id="pkg-heavy" class="pkg-btn p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 flex flex-col items-center justify-center text-center transition-all hover:bg-slate-50">
+                                <i class="fa-solid fa-truck-ramp-box text-base mb-1"></i>
+                                <span class="text-xs font-bold">Heavy Cargo</span>
+                                <span class="text-[10px] text-slate-500">1.6x Rate</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Customer Info Input -->
+                    <div class="space-y-3 bg-white p-3.5 rounded-2xl border border-slate-200">
+                        <div>
+                            <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1 block">
+                                Customer Email <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="email" id="cust-email" placeholder="e.g. kwame@gmail.com" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1 block">
+                                Ghana Mobile / MoMo Number <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">🇬🇭 +233</span>
+                                <input type="tel" id="cust-phone" placeholder="024 123 4567" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-20 pr-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fare Breakdown Card -->
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl shadow-xl space-y-2">
+                        <div class="flex justify-between items-center text-xs text-slate-300">
+                            <span>Base Booking Fee</span>
+                            <span class="font-semibold text-slate-200">GHS 12.00</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-300">
+                            <span>Distance (<span id="calc-dist-km">0.0</span> km @ GHS 2.50)</span>
+                            <span class="font-semibold text-slate-200" id="calc-dist-fee">GHS 0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-300">
+                            <span>Est. Travel Duration</span>
+                            <span class="font-semibold text-emerald-400" id="calc-duration">0 mins</span>
+                        </div>
+                        <div class="pt-2 border-t border-slate-700/80 flex justify-between items-end">
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-widest block font-bold">Total Delivery Charge</span>
+                                <span class="text-xs text-slate-300">Includes dispatch guarantee</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-2xl font-black text-emerald-400">GHS <span id="calc-total-price">12.00</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Paystack Action Footer -->
+                <div class="p-4 border-t border-slate-200 bg-white/80 shrink-0">
+                    <button type="button" onclick="triggerPaystackPayment()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center space-x-2 text-base">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>PAY WITH MOBILE MONEY</span>
+                    </button>
+                    <p class="text-[11px] text-center text-slate-400 mt-2 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-lock text-[10px]"></i> Secured by Paystack Inline (MTN / Telecel / AT)
+                    </p>
+                </div>
+
             </div>
-        </div>
-    </div>
 
-    <!-- Leaflet Map JS -->
+        </div>
+
+        <!-- ==================== ADMIN & DRIVER PORTAL VIEW ==================== -->
+        <div id="view-admin" class="absolute inset-0 bg-slate-900 text-slate-100 z-10 hidden flex-col overflow-y-auto p-4 md:p-8 space-y-6">
+            
+            <div class="max-w-6xl mx-auto w-full space-y-6">
+                
+                <!-- Section Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                    <div>
+                        <h2 class="text-2xl font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-user-gear text-blue-500"></i> Dispatch & Driver Control Panel
+                        </h2>
+                        <p class="text-sm text-slate-400 mt-1">Manage rider onboarding and monitor active Kumasi deliveries</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 text-center">
+                            <span class="text-xs text-slate-400 block font-bold uppercase">Registered Riders</span>
+                            <span id="stat-driver-count" class="text-xl font-extrabold text-blue-400">0</span>
+                        </div>
+                        <div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 text-center">
+                            <span class="text-xs text-slate-400 block font-bold uppercase">Completed Jobs</span>
+                            <span id="stat-order-count" class="text-xl font-extrabold text-emerald-400">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Driver Registration Card -->
+                    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4 h-fit">
+                        <div class="border-b border-slate-700 pb-3">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-motorcycle text-emerald-400"></i> Register Dispatch Driver
+                            </h3>
+                            <p class="text-xs text-slate-400">Add new rider to Kumasi fleet</p>
+                        </div>
+
+                        <form id="driver-reg-form" onsubmit="registerDriver(event)" class="space-y-3">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-1">Driver Full Name</label>
+                                <input type="text" id="drv-name" placeholder="Kwame Mensah" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-1">Phone Number</label>
+                                <input type="tel" id="drv-phone" placeholder="024 400 0000" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-1">Motorbike Plate Number</label>
+                                <input type="text" id="drv-plate" placeholder="M-24-AS 1088" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-1">Primary Station Base</label>
+                                <select id="drv-station" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="Kejetia Terminal">Kejetia Terminal</option>
+                                    <option value="Adum Central">Adum Central</option>
+                                    <option value="KNUST Campus">KNUST Campus</option>
+                                    <option value="Suame Magazine">Suame Magazine</option>
+                                    <option value="Asafo Station">Asafo Station</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-lg text-sm mt-2">
+                                <i class="fa-solid fa-plus mr-1"></i> Add Rider to System
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Fleet & Recent Orders List -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <!-- Registered Drivers Table -->
+                        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-id-card text-blue-400"></i> Active Registered Riders
+                            </h3>
+                            <div id="drivers-container" class="space-y-2">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+
+                        <!-- Live Order Logs -->
+                        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Recent Customer Dispatch Orders
+                            </h3>
+                            <div id="orders-container" class="space-y-2">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Paystack Inline JS -->
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <script>
-        // Initialize Map centered on Kumasi, Ghana
-        let map = L.map('map').setView([6.6885, -1.6244], 13);
-        
-        // Use clean CartoDB map tile theme
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        /* ==================== KUMASI PRESET COORDINATES ==================== */
+        const KUMASI_LOCATIONS = [
+            { id: 'adum', name: 'Kumasi Central / Adum', lat: 6.6885, lng: -1.6244 },
+            { id: 'manhyia', name: 'Manhyia Palace', lat: 6.6990, lng: -1.6150 },
+            { id: 'knust', name: 'KNUST Main Campus', lat: 6.6745, lng: -1.5716 },
+            { id: 'kejetia', name: 'Kejetia Market / Bus Terminal', lat: 6.6953, lng: -1.6226 },
+            { id: 'asafo', name: 'Asafo VIP Station', lat: 6.6860, lng: -1.6180 },
+            { id: 'mall', name: 'Kumasi City Mall / Asokwa', lat: 6.6668, lng: -1.6062 },
+            { id: 'santasi', name: 'Santasi Roundabout', lat: 6.6611, lng: -1.6508 },
+            { id: 'sofoline', name: 'Sofoline Interchange', lat: 6.6962, lng: -1.6582 },
+            { id: 'abuakwa', name: 'Abuakwa Township', lat: 6.6942, lng: -1.7050 },
+            { id: 'suame', name: 'Suame Magazine', lat: 6.7198, lng: -1.6295 },
+            { id: 'ejisu', name: 'Ejisu High Street', lat: 6.7161, lng: -1.5123 },
+            { id: 'ahodwo', name: 'Ahodwo Roundabout', lat: 6.6710, lng: -1.6190 }
+        ];
 
-        // Add default marker for Kumasi
-        L.marker([6.6885, -1.6244]).addTo(map).bindPopup('Kumasi Central').openPopup();
+        // Global State Variables
+        let map;
+        let pickupMarker, dropoffMarker, routePolyline;
+        let selectedPkgMultiplier = 1.0;
+        let calculatedDistanceKm = 0;
+        let calculatedFinalFee = 12.00;
 
-        // Distance & Rate Calculator Heuristic
-        function calculateDeliveryRate() {
-            const pickup = document.getElementById('pickup-loc').value.trim();
-            const dropoff = document.getElementById('dropoff-loc').value.trim();
-            
-            let price = 20.00;
-            if (pickup.toLowerCase() !== dropoff.toLowerCase() && dropoff.length > 2) {
-                price = 30.00; // Standard inter-suburb Kumasi dispatch rate
-            }
-            
-            document.getElementById('calc-price').innerText = price.toFixed(2);
-            return price;
+        // Local Storage State
+        let driversList = JSON.parse(localStorage.getItem('swift_drivers') || '[]');
+        let ordersList = JSON.parse(localStorage.getItem('swift_orders') || '[]');
+
+        // Seed default driver if list is empty
+        if (driversList.length === 0) {
+            driversList = [
+                { id: 1, name: 'Kofi Owusu', phone: '0244123456', plate: 'M-23-AS 4021', station: 'Kejetia Terminal' },
+                { id: 2, name: 'Yaw Akoto', phone: '0277987654', plate: 'M-24-AS 9012', station: 'KNUST Campus' }
+            ];
+            localStorage.setItem('swift_drivers', JSON.stringify(driversList));
         }
 
-        document.getElementById('pickup-loc').addEventListener('input', calculateDeliveryRate);
-        document.getElementById('dropoff-loc').addEventListener('input', calculateDeliveryRate);
+        /* ==================== HAVERSINE DISTANCE FORMULA ==================== */
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            
+            // Multiply by 1.3 to simulate realistic Kumasi road routing curves over straight line
+            return Math.round((R * c * 1.3) * 10) / 10;
+        }
 
-        // Tab Switcher
-        function switchTab(tab) {
-            document.getElementById('customer-view').classList.remove('active');
-            document.getElementById('admin-view').classList.remove('active');
-            document.getElementById('tab-cust-btn').classList.remove('active');
-            document.getElementById('tab-admin-btn').classList.remove('active');
+        /* ==================== INITIALIZATION ==================== */
+        window.onload = function() {
+            initMap();
+            populateLocationSelects();
+            renderDriversList();
+            renderOrdersList();
+            handleLocationChange();
+        };
 
-            if (tab === 'customer') {
-                document.getElementById('customer-view').classList.add('active');
-                document.getElementById('tab-cust-btn').classList.add('active');
-                setTimeout(() => map.invalidateSize(), 200);
+        function initMap() {
+            // Centered on Kumasi Central
+            map = L.map('map', { zoomControl: false }).setView([6.6885, -1.6244], 13);
+            
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            // Clean CartoDB Positron Vector Tiles
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(map);
+        }
+
+        function populateLocationSelects() {
+            const pickupSelect = document.getElementById('pickup-preset');
+            const dropoffSelect = document.getElementById('dropoff-preset');
+
+            pickupSelect.innerHTML = '';
+            dropoffSelect.innerHTML = '';
+
+            KUMASI_LOCATIONS.forEach((loc, index) => {
+                const opt1 = new Option(loc.name, loc.id);
+                const opt2 = new Option(loc.name, loc.id);
+                pickupSelect.add(opt1);
+                dropoffSelect.add(opt2);
+            });
+
+            // Set default: Pickup = Kejetia (index 3), Dropoff = KNUST (index 2)
+            pickupSelect.selectedIndex = 3;
+            dropoffSelect.selectedIndex = 2;
+        }
+
+        /* ==================== LOCATION & PRICING ENGINE ==================== */
+        function handleLocationChange() {
+            const pId = document.getElementById('pickup-preset').value;
+            const dId = document.getElementById('dropoff-preset').value;
+
+            const pickupLoc = KUMASI_LOCATIONS.find(l => l.id === pId);
+            const dropoffLoc = KUMASI_LOCATIONS.find(l => l.id === dId);
+
+            if (!pickupLoc || !dropoffLoc) return;
+
+            // Calculate Haversine Distance
+            if (pId === dId) {
+                calculatedDistanceKm = 0.8; // Minimum intra-neighbourhood distance
             } else {
-                document.getElementById('admin-view').classList.add('active');
-                document.getElementById('tab-admin-btn').classList.add('active');
-                renderDriversList();
+                calculatedDistanceKm = calculateHaversineDistance(
+                    pickupLoc.lat, pickupLoc.lng,
+                    dropoffLoc.lat, dropoffLoc.lng
+                );
             }
+
+            // Real Pricing Formula: Base GHS 12.00 + (GHS 2.50 / km) * Package Multiplier
+            const distanceFee = calculatedDistanceKm * 2.50;
+            calculatedFinalFee = Math.max(12.00, (12.00 + distanceFee) * selectedPkgMultiplier);
+            
+            // Estimated travel duration (Avg 22 km/h city traffic in Kumasi)
+            const estMinutes = Math.max(8, Math.round((calculatedDistanceKm / 22) * 60) + 5);
+
+            // Update UI Elements
+            document.getElementById('calc-dist-km').innerText = calculatedDistanceKm.toFixed(1);
+            document.getElementById('calc-dist-fee').innerText = `GHS ${distanceFee.toFixed(2)}`;
+            document.getElementById('calc-duration').innerText = `${estMinutes} mins`;
+            document.getElementById('calc-total-price').innerText = calculatedFinalFee.toFixed(2);
+
+            // Update Map Visuals
+            updateMapMarkersAndRoute(pickupLoc, dropoffLoc);
         }
 
-        // Paystack Trigger Function
-        function triggerPaystackPayment() {
-            const email = document.getElementById('cust-email').value;
-            const phone = document.getElementById('cust-phone').value;
-            const priceGHS = calculateDeliveryRate();
+        function updateMapMarkersAndRoute(pLoc, dLoc) {
+            if (pickupMarker) map.removeLayer(pickupMarker);
+            if (dropoffMarker) map.removeLayer(dropoffMarker);
+            if (routePolyline) map.removeLayer(routePolyline);
 
-            if (!email || !phone) {
-                alert('Please enter your email and phone number to continue.');
+            // Green Icon for Pickup
+            const greenIcon = L.divIcon({
+                className: 'custom-pin',
+                html: `<div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-lg font-bold"><i class="fa-solid fa-box text-xs"></i></div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            // Red Icon for Dropoff
+            const redIcon = L.divIcon({
+                className: 'custom-pin',
+                html: `<div class="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center border-2 border-white shadow-lg font-bold"><i class="fa-solid fa-location-dot text-xs"></i></div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            pickupMarker = L.marker([pLoc.lat, pLoc.lng], { icon: greenIcon }).addTo(map).bindPopup(`<b>Pickup:</b> ${pLoc.name}`);
+            dropoffMarker = L.marker([dLoc.lat, dLoc.lng], { icon: redIcon }).addTo(map).bindPopup(`<b>Dropoff:</b> ${dLoc.name}`);
+
+            // Draw Polyline Route
+            const latlngs = [
+                [pLoc.lat, pLoc.lng],
+                [dLoc.lat, dLoc.lng]
+            ];
+            
+            routePolyline = L.polyline(latlngs, {
+                color: '#2563eb',
+                weight: 5,
+                opacity: 0.8,
+                dashArray: '10, 10',
+                lineCap: 'round'
+            }).addTo(map);
+
+            // Fit Map View
+            const bounds = L.latLngBounds([pLoc.lat, pLoc.lng], [dLoc.lat, dLoc.lng]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function swapLocations() {
+            const pSelect = document.getElementById('pickup-preset');
+            const dSelect = document.getElementById('dropoff-preset');
+            const temp = pSelect.selectedIndex;
+            pSelect.selectedIndex = dSelect.selectedIndex;
+            dSelect.selectedIndex = temp;
+            handleLocationChange();
+        }
+
+        function setPackageType(type, multiplier) {
+            selectedPkgMultiplier = multiplier;
+            
+            // Toggle active classes
+            document.querySelectorAll('.pkg-btn').forEach(btn => {
+                btn.className = 'pkg-btn p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 flex flex-col items-center justify-center text-center transition-all hover:bg-slate-50';
+            });
+
+            const activeBtn = document.getElementById(`pkg-${type}`);
+            activeBtn.className = 'pkg-btn p-2.5 rounded-xl border border-blue-500 bg-blue-50/70 text-blue-700 flex flex-col items-center justify-center text-center transition-all shadow-sm';
+
+            handleLocationChange();
+        }
+
+        /* ==================== PAYSTACK PAYMENT INTEGRATION ==================== */
+        function triggerPaystackPayment() {
+            const email = document.getElementById('cust-email').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            
+            const pLocName = KUMASI_LOCATIONS.find(l => l.id === document.getElementById('pickup-preset').value).name;
+            const dLocName = KUMASI_LOCATIONS.find(l => l.id === document.getElementById('dropoff-preset').value).name;
+
+            // Simple Form Validation
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid customer email address.');
+                return;
+            }
+            if (!phone || phone.length < 9) {
+                alert('Please enter a valid Ghanaian Mobile Money phone number.');
                 return;
             }
 
-            // Paystack Setup
+            // Paystack Inline Setup
             let handler = PaystackPop.setup({
-                key: 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee', // Test key (Replace with pk_live_ when Paystack approves account)
+                key: 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee', // Replace with pk_live_ when activated
                 email: email,
-                amount: priceGHS * 100, // Pesewas
+                amount: Math.round(calculatedFinalFee * 100), // Amount in Pesewas
                 currency: 'GHS',
+                ref: 'SWIFT_' + Math.floor((Math.random() * 1000000000) + 1),
                 metadata: {
                     custom_fields: [
-                        { display_name: "Mobile Number", variable_name: "mobile_number", value: phone },
-                        { display_name: "Pickup Location", variable_name: "pickup_location", value: document.getElementById('pickup-loc').value },
-                        { display_name: "Delivery Destination", variable_name: "delivery_destination", value: document.getElementById('dropoff-loc').value }
+                        { display_name: "Customer Phone", variable_name: "mobile_number", value: phone },
+                        { display_name: "Pickup Location", variable_name: "pickup_location", value: pLocName },
+                        { display_name: "Delivery Destination", variable_name: "delivery_destination", value: dLocName },
+                        { display_name: "Distance (KM)", variable_name: "distance_km", value: calculatedDistanceKm }
                     ]
                 },
                 callback: function(response) {
-                    alert('Payment Successful! Reference: ' + response.reference);
+                    // Record completed order in storage
+                    const newOrder = {
+                        ref: response.reference,
+                        email: email,
+                        phone: phone,
+                        pickup: pLocName,
+                        dropoff: dLocName,
+                        amount: calculatedFinalFee.toFixed(2),
+                        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    };
+
+                    ordersList.unshift(newOrder);
+                    localStorage.setItem('swift_orders', JSON.stringify(ordersList));
+                    renderOrdersList();
+
+                    alert(`Payment Successful!\nReference: ${response.reference}\nA dispatch rider has been notified for pickup at ${pLocName}.`);
                 },
                 onClose: function() {
-                    alert('Payment process canceled.');
+                    alert('Payment transaction window closed.');
                 }
             });
+
             handler.openIframe();
         }
 
-        // Driver Management Local Storage Logic
-        let driversList = JSON.parse(localStorage.getItem('swift_drivers') || '[]');
+        /* ==================== TAB NAVIGATION ==================== */
+        function switchTab(tab) {
+            const custView = document.getElementById('view-customer');
+            const adminView = document.getElementById('view-admin');
+            const custBtn = document.getElementById('nav-customer');
+            const adminBtn = document.getElementById('nav-admin');
 
+            if (tab === 'customer') {
+                custView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                custBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-blue-600 text-white shadow-md";
+                adminBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 text-slate-400 hover:text-white";
+                setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+            } else {
+                custView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                custBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 text-slate-400 hover:text-white";
+                adminBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-blue-600 text-white shadow-md";
+            }
+        }
+
+        /* ==================== ADMIN & DRIVER MANAGEMENT ==================== */
         function registerDriver(e) {
             e.preventDefault();
-            const name = document.getElementById('drv-name').value;
-            const phone = document.getElementById('drv-phone').value;
-            const plate = document.getElementById('drv-plate').value;
+            const name = document.getElementById('drv-name').value.trim();
+            const phone = document.getElementById('drv-phone').value.trim();
+            const plate = document.getElementById('drv-plate').value.trim();
+            const station = document.getElementById('drv-station').value;
 
-            driversList.push({ id: Date.now(), name, phone, plate });
+            driversList.push({ id: Date.now(), name, phone, plate, station });
             localStorage.setItem('swift_drivers', JSON.stringify(driversList));
 
             document.getElementById('driver-reg-form').reset();
             renderDriversList();
-            alert('Driver registered successfully!');
+            alert(`Driver ${name} registered successfully to ${station}!`);
         }
 
         function renderDriversList() {
             const container = document.getElementById('drivers-container');
+            document.getElementById('stat-driver-count').innerText = driversList.length;
+
             if (driversList.length === 0) {
-                container.innerHTML = '<p style="color: #64748b; font-size: 13px; margin-top: 8px;">No drivers registered yet.</p>';
+                container.innerHTML = '<p class="text-xs text-slate-500">No riders registered yet.</p>';
                 return;
             }
 
             container.innerHTML = driversList.map(d => `
-                <div class="driver-list-item">
-                    <div>
-                        <strong>${d.name}</strong> (${d.plate})<br>
-                        <span style="font-size: 12px; color: #64748b;">Phone: ${d.phone}</span>
+                <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700/80 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm border border-blue-500/20">
+                            <i class="fa-solid fa-motorcycle"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-white">${d.name}</div>
+                            <div class="text-xs text-slate-400">${d.plate} • Station: <span class="text-slate-300 font-semibold">${d.station}</span></div>
+                        </div>
                     </div>
-                    <span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">Active</span>
+                    <div class="text-right">
+                        <span class="inline-block bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                            Active Rider
+                        </span>
+                        <div class="text-[11px] text-slate-400 mt-1">${d.phone}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderOrdersList() {
+            const container = document.getElementById('orders-container');
+            document.getElementById('stat-order-count').innerText = ordersList.length;
+
+            if (ordersList.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500">No transactions recorded yet.</p>';
+                return;
+            }
+
+            container.innerHTML = ordersList.map(o => `
+                <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700/80 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono font-bold text-blue-400">${o.ref}</span>
+                            <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">${o.date}</span>
+                        </div>
+                        <div class="text-xs text-slate-300 mt-1 font-medium">
+                            <i class="fa-solid fa-circle text-[8px] text-emerald-400 mr-1"></i>${o.pickup} 
+                            <i class="fa-solid fa-arrow-right text-[10px] mx-1 text-slate-500"></i>
+                            <i class="fa-solid fa-location-dot text-[8px] text-rose-400 mr-1"></i>${o.dropoff}
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between md:justify-end gap-3 border-t md:border-t-0 border-slate-800 pt-2 md:pt-0">
+                        <span class="text-xs text-slate-400">${o.phone}</span>
+                        <span class="text-sm font-extrabold text-emerald-400">GHS ${o.amount}</span>
+                    </div>
                 </div>
             `).join('');
         }
