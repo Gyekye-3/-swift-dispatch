@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swift Dispatch - Kumasi Logistics Engine</title>
 
-    <!-- PWA Settings & Manifest Link -->
+    <!-- PWA Settings & Manifest -->
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlN3aWZ0IERpc3BhdGNoIiwKICAic2hvcnRfbmFtZSI6ICJTd2lmdERpc3BhdGNoIiwKICAiZGVzY3JpcHRpb24iOiAiT24tZGVtYW5kIGxvZ2lzdGljcywgZGVsaXZlcnksIGFuZCBmbGVldCBtYW5hZ2VtZW50IHNlcnZpY2UgaW4gS3VtYXNpLCBHaGFuYS4iLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBiMGYxOSIsCiAgInRoZW1lX2NvbG9yIjogIiMyNTYzZWIiLAogICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIKZX0=">
 
-    <!-- Leaflet CSS for Map -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #0b0f19; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* Header Navigation */
+        /* Header Bar */
         .navbar { background: #111827; border-bottom: 1px solid #1f2937; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
         .brand { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #ffffff; }
         .brand span { color: #38bdf8; }
@@ -29,10 +29,10 @@
         /* Main Container */
         .main-container { flex: 1; display: flex; flex-direction: column; position: relative; height: calc(100vh - 57px); }
 
-        /* Map Container */
+        /* Map Canvas */
         #map { flex: 1; width: 100%; height: 100%; z-index: 1; }
 
-        /* Floating Booking Panel */
+        /* Booking Overlay */
         .booking-panel { position: absolute; bottom: 0; left: 0; right: 0; background: #111827; border-top: 1px solid #1f2937; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 18px; z-index: 10; max-height: 55vh; overflow-y: auto; box-shadow: 0 -10px 25px rgba(0,0,0,0.5); }
         
         .form-group { margin-bottom: 12px; }
@@ -49,7 +49,7 @@
         .btn-pay { width: 100%; padding: 15px; background: #2563eb; color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4); }
         .btn-pay:active { transform: scale(0.98); }
 
-        /* Admin Section */
+        /* View Panels */
         .view-section { display: none; }
         .view-section.active { display: block; }
         #admin-view { flex: 1; padding: 20px; background: #0b0f19; overflow-y: auto; }
@@ -63,7 +63,7 @@
 </head>
 <body>
 
-    <!-- Header Navigation Bar -->
+    <!-- Navigation Header -->
     <div class="navbar">
         <div class="brand">⚡ Swift <span>Dispatch</span></div>
         <div class="nav-tabs">
@@ -72,7 +72,7 @@
         </div>
     </div>
 
-    <!-- Customer Dispatch View -->
+    <!-- Customer Mode View -->
     <div id="customer-view" class="main-container view-section active">
         <div id="map"></div>
 
@@ -92,24 +92,24 @@
                 <div class="form-group">
                     <label>Pickup Location</label>
                     <select id="pickup-select" onchange="calculateRoute()">
-                        <option value="6.6885,-1.6244" data-name="Manhyia Palace">Manhyia Palace</option>
-                        <option value="6.6972,-1.6225" data-name="Kejetia Market">Kejetia Market</option>
-                        <option value="6.6731,-1.5654" data-name="KNUST Campus">KNUST Campus</option>
-                        <option value="6.7112,-1.6489" data-name="Suame Magazine">Suame Magazine</option>
-                        <option value="6.6580,-1.6189" data-name="Kumasi City Mall">Kumasi City Mall</option>
-                        <option value="6.6912,-1.6789" data-name="Abuakwa Junction">Abuakwa Junction</option>
+                        <option value="6.6885,-1.6244">Manhyia Palace</option>
+                        <option value="6.6972,-1.6225">Kejetia Market</option>
+                        <option value="6.6731,-1.5654">KNUST Campus</option>
+                        <option value="6.7112,-1.6489">Suame Magazine</option>
+                        <option value="6.6580,-1.6189">Kumasi City Mall</option>
+                        <option value="6.6912,-1.6789">Abuakwa Junction</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>Delivery Destination</label>
                     <select id="dropoff-select" onchange="calculateRoute()">
-                        <option value="6.6731,-1.5654" data-name="KNUST Campus">KNUST Campus</option>
-                        <option value="6.6885,-1.6244" data-name="Manhyia Palace">Manhyia Palace</option>
-                        <option value="6.6972,-1.6225" data-name="Kejetia Market">Kejetia Market</option>
-                        <option value="6.7112,-1.6489" data-name="Suame Magazine">Suame Magazine</option>
-                        <option value="6.6580,-1.6189" data-name="Kumasi City Mall">Kumasi City Mall</option>
-                        <option value="6.6912,-1.6789" data-name="Abuakwa Junction">Abuakwa Junction</option>
+                        <option value="6.6731,-1.5654">KNUST Campus</option>
+                        <option value="6.6885,-1.6244">Manhyia Palace</option>
+                        <option value="6.6972,-1.6225">Kejetia Market</option>
+                        <option value="6.7112,-1.6489">Suame Magazine</option>
+                        <option value="6.6580,-1.6189">Kumasi City Mall</option>
+                        <option value="6.6912,-1.6789">Abuakwa Junction</option>
                     </select>
                 </div>
 
@@ -134,7 +134,7 @@
         </div>
     </div>
 
-    <!-- Admin & Drivers View -->
+    <!-- Admin & Drivers Mode View -->
     <div id="admin-view" class="view-section">
         <div class="admin-card">
             <h3>Register Fleet Driver</h3>
@@ -163,22 +163,24 @@
         </div>
     </div>
 
-    <!-- Leaflet JS & Paystack Inline SDK -->
+    <!-- Leaflet JS & Paystack SDK -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <script>
-        // Map Setup (Kumasi Central)
+        // Initialize Map centered on Kumasi using OpenStreetMap tiles (No Watermark)
         let map = L.map('map').setView([6.6885, -1.6244], 13);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors'
+        
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
         }).addTo(map);
 
         let polylineGroup = L.layerGroup().addTo(map);
 
-        // Calculate Haversine Distance (in km)
+        // Distance Calculation (Haversine formula in km)
         function getDistanceKm(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Radius of Earth in km
+            const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -188,7 +190,7 @@
             return R * c;
         }
 
-        // Calculate Route & Dynamic Pricing
+        // Calculate Route & Distance Rate
         function calculateRoute() {
             polylineGroup.clearLayers();
 
@@ -202,13 +204,11 @@
             const km = getDistanceKm(pLat, pLng, dLat, dLng);
             document.getElementById('dist-km').innerText = km.toFixed(1);
 
-            // Pricing formula: Base 12 GHS + 2.5 GHS/km multiplied by package type
             let calculatedPrice = (12.00 + (km * 2.50)) * pkgMult;
-            if (calculatedPrice < 15.00) calculatedPrice = 15.00; // Minimum fare floor
+            if (calculatedPrice < 15.00) calculatedPrice = 15.00;
 
             document.getElementById('calculated-price').innerText = calculatedPrice.toFixed(2);
 
-            // Draw route line on map
             const pMarker = L.marker([pLat, pLng]).bindPopup('Pickup Point').addTo(polylineGroup);
             const dMarker = L.marker([dLat, dLng]).bindPopup('Destination').addTo(polylineGroup);
             const line = L.polyline([[pLat, pLng], [dLat, dLng]], { color: '#2563eb', weight: 4 }).addTo(polylineGroup);
@@ -219,12 +219,12 @@
 
         calculateRoute();
 
-        // Security PIN Protection for Admin Panel
+        // Switch Tab with Security PIN (Default PIN: 2026)
         function switchTab(tab) {
             if (tab === 'admin') {
                 const pin = prompt("Enter Admin Security PIN:");
                 if (pin !== "2026") {
-                    alert("Unauthorized access denied!");
+                    alert("Incorrect PIN!");
                     return;
                 }
             }
@@ -245,7 +245,7 @@
             }
         }
 
-        // Trigger Paystack Mobile Money Checkout
+        // Paystack Trigger
         function payWithPaystack() {
             const email = document.getElementById('cust-email').value;
             const phone = document.getElementById('cust-phone').value;
@@ -257,9 +257,9 @@
             }
 
             let handler = PaystackPop.setup({
-                key: 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee', // Replace with pk_live_ when Paystack approves account
+                key: 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee',
                 email: email,
-                amount: Math.round(priceGHS * 100), // Pesewas conversion
+                amount: Math.round(priceGHS * 100),
                 currency: 'GHS',
                 metadata: {
                     custom_fields: [
@@ -278,7 +278,7 @@
             handler.openIframe();
         }
 
-        // Local Storage Driver Management
+        // Fleet Driver Registration
         let drivers = JSON.parse(localStorage.getItem('swift_drivers') || '[]');
 
         function saveDriver(e) {
@@ -292,7 +292,7 @@
 
             e.target.reset();
             renderDrivers();
-            alert('Driver added to fleet!');
+            alert('Driver registered successfully!');
         }
 
         function renderDrivers() {
@@ -312,7 +312,7 @@
             `).join('');
         }
 
-        // Inline Service Worker Registration for PWA compliance
+        // Inline Service Worker
         if ('serviceWorker' in navigator) {
             const swCode = `
                 self.addEventListener('install', e => self.skipWaiting());
@@ -324,5 +324,7 @@
     </script>
 </body>
 </html>
+
+
 
 
