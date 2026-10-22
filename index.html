@@ -1,321 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Swift Dispatch - Logistics Platform</title>
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#1e3a8a" />
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Paystack Inline JS Library for MoMo Payments -->
-  <script src="https://js.paystack.co/v1/inline.js"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex justify-center items-start sm:py-8 font-sans antialiased">
-
-  <!-- Main Mobile Container -->
-  <main class="w-full max-w-md bg-slate-950 min-h-screen sm:min-h-0 sm:rounded-3xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+<!-- Inside your booking form section -->
+<div class="card">
+    <h3>Book Dispatch Service</h3>
+    <div id="dynamic-rate-display">Calculated Rate: GHS <span id="rate-amount">20.00</span></div>
     
-    <!-- Header / Status Bar -->
-    <header class="p-5 bg-slate-900 border-b border-slate-800">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          </div>
-          <div>
-            <h1 class="text-xl font-bold tracking-tight text-white leading-tight">Swift Dispatch</h1>
-            <p class="text-xs text-slate-400">Logistics & Fleet Engine</p>
-          </div>
-        </div>
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          Live Neon PG
-        </span>
-      </div>
+    <form id="dispatch-form">
+        <label>Customer Email (For Receipt)</label>
+        <input type="email" id="cust-email" value="customer@gmail.com" required>
 
-      <!-- Mode Switcher Tabs -->
-      <div class="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
-        <button id="tab-customer" onclick="switchTab('customer')" class="py-2 rounded-lg bg-blue-600 text-white transition">Customer Mode</button>
-        <button id="tab-admin" onclick="switchTab('admin')" class="py-2 rounded-lg text-slate-400 hover:text-white transition">Admin & Drivers</button>
-      </div>
-    </header>
+        <label>Pickup Location</label>
+        <input type="text" id="pickup-loc" placeholder="e.g. Manhyia, Kumasi" required>
 
-    <!-- SECTION 1: CUSTOMER DISPATCH & PAYMENT FORM -->
-    <section id="view-customer" class="p-5 space-y-4 flex-1">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Book Dispatch Service</h2>
-        <span class="text-[11px] text-blue-400 font-mono font-bold">Standard Rate: GHS 20.00</span>
-      </div>
+        <label>Delivery Destination</label>
+        <input type="text" id="dropoff-loc" placeholder="e.g. KNUST, Kumasi" required>
 
-      <form id="dispatch-form" class="space-y-3.5" onsubmit="handlePayAndDispatch(event)">
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Customer Email (For Receipt)</label>
-          <input type="email" id="customerEmail" required value="customer@gmail.com" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500" />
-        </div>
+        <label>Package Type</label>
+        <select id="package-type">
+            <option value="Parcel Box">Parcel Box (Base 1x)</option>
+            <option value="Heavy Freight">Heavy Freight (Multiplier 1.5x)</option>
+        </select>
 
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Pickup Location</label>
-          <input type="text" id="pickupLocation" required value="Warehouse 4, Central Accra" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500" />
-        </div>
+        <label>Recipient Phone</label>
+        <input type="text" id="recip-phone" placeholder="+233..." required>
 
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Delivery Destination</label>
-          <input type="text" id="deliveryLocation" required value="12 Ring Road East, Labone" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500" />
-        </div>
+        <button type="button" id="pay-dispatch-btn" class="btn-primary">PAY & DISPATCH</button>
+    </form>
+</div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Package Type</label>
-            <select id="packageType" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500">
-              <option value="Documents">Documents</option>
-              <option value="Parcel" selected>Parcel Box</option>
-              <option value="Fragile">Fragile Goods</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Recipient Phone</label>
-            <input type="tel" id="recipientPhone" required value="+233 55 000 0000" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500" />
-          </div>
-        </div>
+<!-- Include Paystack Script -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+    // Dynamic distance/location price estimator logic
+    function calculatePrice() {
+        const pickup = document.getElementById('pickup-loc').value.trim();
+        const dropoff = document.getElementById('dropoff-loc').value.trim();
+        let baseRate = 20.00; // Base GHS for short local trips
 
-        <!-- Idempotency Module -->
-        <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2 text-xs">
-          <div class="flex items-center justify-between">
-            <span class="text-slate-300 font-medium">Attach Idempotency Key</span>
-            <input type="checkbox" id="useIdempotency" checked class="w-4 h-4 text-blue-600 rounded bg-slate-950 border-slate-800 focus:ring-blue-500" />
-          </div>
-          <div class="flex gap-2">
-            <input type="text" id="idempotencyKey" readonly class="flex-1 px-2.5 py-1 bg-slate-950 border border-slate-800 rounded text-[11px] font-mono text-slate-400" />
-            <button type="button" onclick="renewIdempotencyKey()" class="px-2.5 py-1 bg-blue-600/20 text-blue-400 rounded text-[11px] font-semibold hover:bg-blue-600/30">Renew</button>
-          </div>
-        </div>
-
-        <!-- Submit & Pay Button -->
-        <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/25 transition active:scale-[0.98] text-sm flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-          <span>PAY & DISPATCH (GHS 20.00)</span>
-        </button>
-      </form>
-    </section>
-
-    <!-- SECTION 2: ADMIN & DRIVER MANAGEMENT PANEL -->
-    <section id="view-admin" class="p-5 space-y-5 flex-1 hidden">
-      
-      <!-- Driver Registration Card -->
-      <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 100 8.002 4 4 0 000-8.002zM12 14c-6.1 0-8 4-8 4v2h16v-2s-1.9-4-8-4z"/></svg>
-            Register Driver Number
-          </h3>
-          <span class="text-[10px] text-slate-500">Fleet Control</span>
-        </div>
-
-        <form id="driver-form" class="space-y-2.5" onsubmit="handleAddDriver(event)">
-          <div>
-            <input type="text" id="driverName" required placeholder="Driver Full Name (e.g., Kwesi Appiah)" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <input type="tel" id="driverPhone" required placeholder="Phone / MoMo Number" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
-            <select id="vehicleType" class="w-full px-2 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500">
-              <option value="Motorbike">Motorbike</option>
-              <option value="Aboboyaa">Aboboyaa</option>
-              <option value="Delivery Van">Delivery Van</option>
-            </select>
-          </div>
-          <button type="submit" class="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-blue-400 font-semibold rounded-lg text-xs transition">
-            + Save Driver to Active Fleet
-          </button>
-        </form>
-      </div>
-
-      <!-- Active Drivers Roster -->
-      <div class="space-y-2">
-        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Fleet Drivers (<span id="driver-count">1</span>)</h3>
-        <div id="drivers-list" class="space-y-2">
-          <!-- Initial Registered Driver -->
-          <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
-            <div>
-              <p class="font-bold text-white">Kwaku Boateng</p>
-              <p class="text-slate-400 font-mono text-[11px]">+233241234567 • Motorbike</p>
-            </div>
-            <span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">Ready</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Incoming Customer Orders -->
-      <div class="space-y-2 pt-2 border-t border-slate-800">
-        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Paid Customer Orders</h3>
-        <div id="orders-list" class="space-y-2">
-          <p class="text-xs text-slate-500 italic p-3 text-center bg-slate-900/40 rounded-xl border border-slate-800/60">No pending orders yet. Place an order in Customer Mode to test!</p>
-        </div>
-      </div>
-
-    </section>
-
-  </main>
-
-  <script>
-    // System State
-    let drivers = [
-      { name: "Kwaku Boateng", phone: "+233241234567", vehicle: "Motorbike" }
-    ];
-    let orders = [];
-
-    // Auto-generate Idempotency Key
-    function generateUUID() {
-      return 'idx_' + Math.random().toString(36).substring(2, 9);
-    }
-    document.getElementById('idempotencyKey').value = generateUUID();
-
-    function renewIdempotencyKey() {
-      document.getElementById('idempotencyKey').value = generateUUID();
-    }
-
-    // View Switcher
-    function switchTab(tab) {
-      const custView = document.getElementById('view-customer');
-      const adminView = document.getElementById('view-admin');
-      const custBtn = document.getElementById('tab-customer');
-      pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee
-
-      if (tab === 'customer') {
-        custView.classList.remove('hidden');
-        adminView.classList.add('hidden');
-        custBtn.className = "py-2 rounded-lg bg-blue-600 text-white transition";
-        adminBtn.className = "py-2 rounded-lg text-slate-400 hover:text-white transition";
-      } else {
-        custView.classList.add('hidden');
-        adminView.classList.remove('hidden');
-        adminBtn.className = "py-2 rounded-lg bg-blue-600 text-white transition";
-        custBtn.className = "py-2 rounded-lg text-slate-400 hover:text-white transition";
-      }
-    }
-
-    // Register New Driver
-    function handleAddDriver(e) {
-      e.preventDefault();
-      const name = document.getElementById('driverName').value;
-      const phone = document.getElementById('driverPhone').value;
-      const vehicle = document.getElementById('vehicleType').value;
-
-      drivers.push({ name, phone, vehicle });
-      renderDrivers();
-      document.getElementById('driver-form').reset();
-    }
-
-    function renderDrivers() {
-      const list = document.getElementById('drivers-list');
-      document.getElementById('driver-count').innerText = drivers.length;
-      list.innerHTML = drivers.map(d => `
-        <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
-          <div>
-            <p class="font-bold text-white">${d.name}</p>
-            <p class="text-slate-400 font-mono text-[11px]">${d.phone} • ${d.vehicle}</p>
-          </div>
-          <span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">Ready</span>
-        </div>
-      `).join('');
-    }
-
-    // Paystack Mobile Money Handler
-    function handlePayAndDispatch(e) {
-      e.preventDefault();
-
-      const email = document.getElementById('customerEmail').value;
-      const pickup = document.getElementById('pickupLocation').value;
-      const delivery = document.getElementById('deliveryLocation').value;
-      const pkg = document.getElementById('packageType').value;
-      const phone = document.getElementById('recipientPhone').value;
-
-      // Initialize Paystack Inline Checkout (2000 pesewas = GHS 20.00)
-      const handler = PaystackPop.setup({
-        key: 'pk_test_d3a8e932b3bf705c92c90df1a07df8b87c4f4b1e', // Replace with your real Paystack Public Key
-        email: email,
-        amount: 2000, 
-        currency: 'GHS',
-        ref: 'SWIFT-' + Math.floor(100000 + Math.random() * 900000),
-        callback: function(response) {
-          // Triggered on Successful MoMo Payment
-          const newOrder = {
-            id: response.reference,
-            pickup: pickup,
-            delivery: delivery,
-            package: pkg,
-            phone: phone,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            status: 'Paid via MoMo'
-          };
-
-          orders.unshift(newOrder);
-          renderOrders();
-          alert('Payment Successful! Order ' + response.reference + ' logged.');
-          switchTab('admin');
-        },
-        onClose: function() {
-          alert('Transaction was cancelled.');
+        // Simple heuristic distance/zone estimation for demo/production calculation
+        if (pickup.toLowerCase() !== dropoff.toLowerCase() && dropoff.length > 3) {
+            baseRate = 35.00; // Inter-neighborhood rate
         }
-      });
+        
+        const packageType = document.getElementById('package-type').value;
+        if (packageType === 'Heavy Freight') {
+            baseRate *= 1.5;
+        }
 
-      handler.openIframe();
+        document.getElementById('rate-amount').innerText = baseRate.toFixed(2);
+        return baseRate * 100; // Convert to pesewas for Paystack
     }
 
-    // Render Orders in Admin View
-    function renderOrders() {
-      const list = document.getElementById('orders-list');
-      if (orders.length === 0) {
-        list.innerHTML = '<p class="text-xs text-slate-500 italic p-3 text-center bg-slate-900/40 rounded-xl border border-slate-800/60">No pending orders yet.</p>';
-        return;
-      }
+    document.getElementById('pickup-loc').addEventListener('input', calculatePrice);
+    document.getElementById('dropoff-loc').addEventListener('input', calculatePrice);
+    document.getElementById('package-type').addEventListener('change', calculatePrice);
 
-      list.innerHTML = orders.map((ord, idx) => `
-        <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-2xl space-y-2 text-xs">
-          <div class="flex justify-between items-center border-b border-slate-800/60 pb-2">
-            <span class="font-bold text-blue-400 font-mono">${ord.id}</span>
-            <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold">${ord.status}</span>
-          </div>
-          <div class="space-y-1 text-slate-300">
-            <p><strong class="text-slate-400">Pickup:</strong> ${ord.pickup}</p>
-            <p><strong class="text-slate-400">Dropoff:</strong> ${ord.delivery}</p>
-            <p><strong class="text-slate-400">Package:</strong> ${ord.package} (${ord.phone})</p>
-          </div>
-          
-          <div class="pt-2 flex items-center gap-2">
-            <select id="select-driver-${idx}" class="flex-1 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none">
-              ${drivers.map(d => `<option value="${d.phone}">${d.name} (${d.vehicle})</option>`).join('')}
-            </select>
-            <button onclick="dispatchToWhatsApp(${idx})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition flex items-center gap-1">
-              <span>Send to Driver</span>
-            </button>
-          </div>
-        </div>
-      `).join('');
+    document.getElementById('pay-dispatch-btn').addEventListener('click', function() {
+        const email = document.getElementById('cust-email').value;
+        const amountInPesewas = calculatePrice();
+        const publicKey = 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee';
+
+        let handler = PaystackPop.setup({
+            key: publicKey,
+            email: email,
+            amount: amountInPesewas,
+            currency: 'GHS',
+            callback: function(response) {
+                alert('Payment complete! Reference: ' + response.reference);
+                // Send order data to backend database API
+                recordOrder(response.reference);
+            },
+            onClose: function() {
+                alert('Transaction window closed.');
+            }
+        });
+        handler.openIframe();
+    });
+
+    async function recordOrder(reference) {
+        await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                reference: reference,
+                email: document.getElementById('cust-email').value,
+                pickup: document.getElementById('pickup-loc').value,
+                destination: document.getElementById('dropoff-loc').value,
+                amount: document.getElementById('rate-amount').innerText
+            })
+        });
+        window.location.reload();
     }
-
-    // Dispatch job to selected Driver via WhatsApp
-    function dispatchToWhatsApp(orderIdx) {
-      const ord = orders[orderIdx];
-      const driverPhone = document.getElementById(`select-driver-${orderIdx}`).value;
-      
-      const text = encodeURIComponent(
-        `🚚 *NEW SWIFT DISPATCH JOB* [${ord.id}]\n\n` +
-        `*Status:* ${ord.status}\n` +
-        `*Pickup Location:* ${ord.pickup}\n` +
-        `*Delivery Location:* ${ord.delivery}\n` +
-        `*Package:* ${ord.package}\n` +
-        `*Recipient Phone:* ${ord.phone}\n\n` +
-        `Please proceed for pickup immediately.`
-      );
-
-      const cleanPhone = driverPhone.replace(/[^0-9]/g, '');
-      window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
-    }
-  </script>
-</body>
-</html>
-
-
-
+</script>
