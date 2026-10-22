@@ -1,17 +1,24 @@
 {
   "name": "Swift Dispatch",
   "short_name": "SwiftDispatch",
+  "description": "On-demand logistics, delivery, and fleet management service in Kumasi, Ghana.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#0b0f19",
   "theme_color": "#2563eb",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2830/2830305.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/7133/7133423.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/7133/7133423.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
+
 
