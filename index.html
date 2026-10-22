@@ -5,20 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swift Dispatch - Kumasi Logistics Engine</title>
 
-    <!-- PWA Settings & Manifest -->
+    <!-- Real PWA Manifest Link -->
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlN3aWZ0IERpc3BhdGNoIiwKICAic2hvcnRfbmFtZSI6ICJTd2lmdERpc3BhdGNoIiwKICAiZGVzY3JpcHRpb24iOiAiT24tZGVtYW5kIGxvZ2lzdGljcywgZGVsaXZlcnksIGFuZCBmbGVldCBtYW5hZ2VtZW50IHNlcnZpY2UgaW4gS3VtYXNpLCBHaGFuYS4iLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBiMGYxOSIsCiAgInRoZW1lX2NvbG9yIjogIiMyNTYzZWIiLAogICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIKZX0=">
 
-    <!-- Leaflet CSS -->
+    <!-- Leaflet Map CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #0b0f19; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* Header Bar */
         .navbar { background: #111827; border-bottom: 1px solid #1f2937; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
         .brand { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #ffffff; }
         .brand span { color: #38bdf8; }
@@ -26,44 +25,33 @@
         .tab-btn { background: transparent; color: #94a3b8; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
         .tab-btn.active { background: #2563eb; color: #ffffff; }
 
-        /* Main Container */
         .main-container { flex: 1; display: flex; flex-direction: column; position: relative; height: calc(100vh - 57px); }
-
-        /* Map Canvas */
         #map { flex: 1; width: 100%; height: 100%; z-index: 1; }
 
-        /* Booking Overlay */
         .booking-panel { position: absolute; bottom: 0; left: 0; right: 0; background: #111827; border-top: 1px solid #1f2937; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 18px; z-index: 10; max-height: 55vh; overflow-y: auto; box-shadow: 0 -10px 25px rgba(0,0,0,0.5); }
-        
         .form-group { margin-bottom: 12px; }
         label { display: block; font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         input, select { width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; border-radius: 10px; color: #ffffff; font-size: 14px; outline: none; }
         input:focus, select:focus { border-color: #2563eb; }
 
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
         .price-summary { background: #1f2937; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin: 12px 0; border: 1px solid #374151; }
         .price-label { font-size: 12px; color: #94a3b8; }
         .price-val { font-size: 20px; font-weight: 800; color: #38bdf8; }
 
         .btn-pay { width: 100%; padding: 15px; background: #2563eb; color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4); }
-        .btn-pay:active { transform: scale(0.98); }
-
-        /* View Panels */
+        
         .view-section { display: none; }
         .view-section.active { display: block; }
         #admin-view { flex: 1; padding: 20px; background: #0b0f19; overflow-y: auto; }
-
         .admin-card { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
         .admin-card h3 { font-size: 15px; margin-bottom: 12px; color: #f8fafc; }
-        
         .driver-item { background: #1f2937; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .status-badge { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
     </style>
 </head>
 <body>
 
-    <!-- Navigation Header -->
     <div class="navbar">
         <div class="brand">⚡ Swift <span>Dispatch</span></div>
         <div class="nav-tabs">
@@ -72,7 +60,6 @@
         </div>
     </div>
 
-    <!-- Customer Mode View -->
     <div id="customer-view" class="main-container view-section active">
         <div id="map"></div>
 
@@ -134,7 +121,6 @@
         </div>
     </div>
 
-    <!-- Admin & Drivers Mode View -->
     <div id="admin-view" class="view-section">
         <div class="admin-card">
             <h3>Register Fleet Driver</h3>
@@ -148,7 +134,7 @@
                     <input type="tel" id="drv-phone" placeholder="024XXXXXXX" required>
                 </div>
                 <div class="form-group">
-                    <label>Vehicle / Motorbike Reg Number</label>
+                    <label>Vehicle Reg Number</label>
                     <input type="text" id="drv-plate" placeholder="M-24-AS 1024" required>
                 </div>
                 <button type="submit" class="btn-pay" style="background: #16a34a;">Register Driver</button>
@@ -163,12 +149,10 @@
         </div>
     </div>
 
-    <!-- Leaflet JS & Paystack SDK -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <script>
-        // Initialize Map centered on Kumasi using OpenStreetMap tiles (No Watermark)
         let map = L.map('map').setView([6.6885, -1.6244], 13);
         
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -178,7 +162,6 @@
 
         let polylineGroup = L.layerGroup().addTo(map);
 
-        // Distance Calculation (Haversine formula in km)
         function getDistanceKm(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -190,7 +173,6 @@
             return R * c;
         }
 
-        // Calculate Route & Distance Rate
         function calculateRoute() {
             polylineGroup.clearLayers();
 
@@ -219,7 +201,6 @@
 
         calculateRoute();
 
-        // Switch Tab with Security PIN (Default PIN: 2026)
         function switchTab(tab) {
             if (tab === 'admin') {
                 const pin = prompt("Enter Admin Security PIN:");
@@ -245,7 +226,6 @@
             }
         }
 
-        // Paystack Trigger
         function payWithPaystack() {
             const email = document.getElementById('cust-email').value;
             const phone = document.getElementById('cust-phone').value;
@@ -278,7 +258,6 @@
             handler.openIframe();
         }
 
-        // Fleet Driver Registration
         let drivers = JSON.parse(localStorage.getItem('swift_drivers') || '[]');
 
         function saveDriver(e) {
@@ -312,18 +291,18 @@
             `).join('');
         }
 
-        // Inline Service Worker
+        // Register Standalone Service Worker
         if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-            `;
-            const blob = new Blob([swCode], { type: 'text/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(() => console.log('SW Registered'))
+                    .catch(err => console.error('SW Error:', err));
+            });
         }
     </script>
 </body>
 </html>
+
 
 
 
