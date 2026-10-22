@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swift Dispatch - Live Fleet & Dispatch Engine</title>
+    <title>Swift Dispatch - Ashanti Region Logistics & Fleet Engine</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -69,7 +69,7 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold leading-tight">Swift Dispatch</h1>
-                    <p class="text-xs text-slate-400">Logistics & Live Fleet Engine</p>
+                    <p class="text-xs text-slate-400">Logistics & Fleet Engine • Ashanti Region</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full">
@@ -94,17 +94,19 @@
         <!-- ================= CUSTOMER VIEW ================= -->
         <div id="view-customer" class="flex flex-col gap-5">
             
-            <!-- Map Container Card -->
+            <!-- Map Container Card focused on Kumasi / Ashanti -->
             <div class="glass-card p-4 relative shadow-xl">
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400"><i class="fa-solid fa-map-location-dot mr-1"></i> Live Route Planner</span>
-                    <button onclick="getUserLocation()" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20">
-                        <i class="fa-solid fa-location-crosshairs"></i> Use My GPS
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        <i class="fa-solid fa-map-location-dot mr-1 text-blue-500"></i> Ashanti Region Route Map
+                    </span>
+                    <button onclick="getUserLocation()" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20 transition-all active:scale-95">
+                        <i class="fa-solid fa-location-crosshairs"></i> Use GPS
                     </button>
                 </div>
-                <div id="map" class="w-full h-56 rounded-xl border border-gray-800 mb-2"></div>
-                <div class="text-[11px] text-slate-500 text-center italic">
-                    💡 Click on map to auto-set <span class="text-emerald-400 font-semibold">Pickup (1st click)</span> and <span class="text-rose-400 font-semibold">Destination (2nd click)</span>.
+                <div id="map" class="w-full h-64 rounded-xl border border-gray-800 mb-2"></div>
+                <div class="text-[11px] text-slate-400 text-center italic">
+                    💡 Click points on the map to place <span class="text-emerald-400 font-semibold">Pickup (1st tap)</span> and <span class="text-rose-400 font-semibold">Destination (2nd tap)</span> in Ashanti.
                 </div>
             </div>
 
@@ -113,8 +115,8 @@
                 <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-800">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Book Dispatch Service</span>
                     <div class="text-right">
-                        <span class="text-xs text-slate-400 block">Distance: <span id="dist-display" class="text-slate-200 font-bold">0.0 km</span></span>
-                        <span class="text-sm font-bold text-blue-400">Estimated Rate: GHS <span id="rate-display">20.00</span></span>
+                        <span class="text-xs text-slate-400 block">Distance: <span id="dist-display" class="text-slate-200 font-bold">4.2 km</span></span>
+                        <span class="text-sm font-bold text-blue-400">Total Rate: GHS <span id="rate-display">29.70</span></span>
                     </div>
                 </div>
 
@@ -129,7 +131,7 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Pickup Location Name</label>
                         <div class="relative">
-                            <input type="text" id="pickup-name" value="Warehouse 4, Central Accra" required 
+                            <input type="text" id="pickup-name" value="Kejetia Market, Kumasi Central" required 
                                    class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors pl-10">
                             <i class="fa-solid fa-circle-dot text-emerald-500 absolute left-3.5 top-3.5 text-sm"></i>
                         </div>
@@ -138,7 +140,7 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Delivery Destination</label>
                         <div class="relative">
-                            <input type="text" id="dropoff-name" value="12 Ring Road East, Labone" required 
+                            <input type="text" id="dropoff-name" value="KNUST Commercial Area, Ayeduase" required 
                                    class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors pl-10">
                             <i class="fa-solid fa-location-dot text-rose-500 absolute left-3.5 top-3.5 text-sm"></i>
                         </div>
@@ -149,21 +151,21 @@
                             <label class="block text-xs font-medium text-slate-300 mb-1">Package Type</label>
                             <select id="package-type" onchange="recalculateFare()" 
                                     class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-blue-500">
-                                <option value="Parcel Box">Parcel Box (1x)</option>
-                                <option value="Fragile Express">Fragile Express (1.25x)</option>
+                                <option value="Parcel Box">Parcel Box (1.0x)</option>
+                                <option value="Medium Cargo">Medium Cargo (1.25x)</option>
                                 <option value="Heavy Freight">Heavy Freight (1.5x)</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-300 mb-1">Recipient Phone</label>
-                            <input type="text" id="recip-phone" value="+233 55 000 0000" required 
+                            <input type="text" id="recip-phone" value="+233 24 123 4567" required 
                                    class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-blue-500">
                         </div>
                     </div>
 
                     <button type="submit" id="pay-btn" 
                             class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2">
-                        <i class="fa-solid fa-credit-card"></i> PAY & DISPATCH (<span id="btn-amount">GHS 20.00</span>)
+                        <i class="fa-solid fa-credit-card"></i> PAY & DISPATCH (<span id="btn-amount">GHS 29.70</span>)
                     </button>
 
                 </form>
@@ -175,8 +177,8 @@
             <div class="glass-card p-5 shadow-xl">
                 <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-800">
                     <div>
-                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">Fleet Control Center</h2>
-                        <p class="text-xs text-slate-400">Live order queue & active delivery status</p>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">Ashanti Fleet Control</h2>
+                        <p class="text-xs text-slate-400">Active Kumasi Dispatches & Live Driver Queue</p>
                     </div>
                     <button onclick="renderAdminOrders()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700 font-semibold text-blue-400">
                         <i class="fa-solid fa-arrows-rotate mr-1"></i> Sync Orders
@@ -192,17 +194,18 @@
     </div>
 
     <script>
-        // --- GLOBAL CONFIG & STATE ---
+        // --- GLOBAL CONFIG & KUMASI ASHANTI COORDINATES ---
         const PAYSTACK_PUBLIC_KEY = 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee';
         
-        // Accra central coordinates fallback
-        let pickupCoords = { lat: 5.5600, lng: -0.2050 };
-        let dropoffCoords = { lat: 5.5750, lng: -0.1800 };
+        // Original Ashanti Region Default Coordinates (Kejetia Market -> KNUST)
+        const ASHANTI_KUMASI_CENTER = { lat: 6.6885, lng: -1.6244 };
+        let pickupCoords = { lat: 6.6960, lng: -1.6210 };  // Kejetia Market area
+        let dropoffCoords = { lat: 6.6740, lng: -1.5690 }; // KNUST Campus area
         
         let map, pickupMarker, dropoffMarker, routePolyline, driverMarker;
         let setModeClick = 'pickup'; // 'pickup' or 'dropoff'
-        let currentDistanceKm = 3.5;
-        let calculatedPrice = 20.00;
+        let currentDistanceKm = 4.2;
+        let calculatedPrice = 29.70;
 
         // Initialize Map & Application
         window.onload = function() {
@@ -211,16 +214,16 @@
             syncLocalData();
         };
 
-        // Initialize Leaflet Map
+        // Initialize Leaflet Map Centered on Ashanti Region / Kumasi
         function initMap() {
-            map = L.map('map').setView([pickupCoords.lat, pickupCoords.lng], 13);
+            map = L.map('map').setView([ASHANTI_KUMASI_CENTER.lat, ASHANTI_KUMASI_CENTER.lng], 13);
 
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
                 maxZoom: 19
             }).addTo(map);
 
-            // Icon Customizations
+            // Custom Marker Icons
             const greenIcon = L.divIcon({
                 html: '<i class="fa-solid fa-circle-dot text-emerald-500 text-2xl"></i>',
                 className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 12]
@@ -232,10 +235,10 @@
             });
 
             pickupMarker = L.marker([pickupCoords.lat, pickupCoords.lng], {icon: greenIcon, draggable: true}).addTo(map)
-                .bindPopup('Pickup Location').openPopup();
+                .bindPopup('Pickup: Kejetia, Kumasi').openPopup();
 
             dropoffMarker = L.marker([dropoffCoords.lat, dropoffCoords.lng], {icon: redIcon, draggable: true}).addTo(map)
-                .bindPopup('Delivery Destination');
+                .bindPopup('Destination: KNUST, Kumasi');
 
             // Marker Drag Listeners
             pickupMarker.on('dragend', function(e) {
@@ -248,18 +251,18 @@
                 updateRoute();
             });
 
-            // Map Click Listener to select locations
+            // Map Click Listener to select locations anywhere in Ashanti Region
             map.on('click', function(e) {
                 if (setModeClick === 'pickup') {
                     pickupCoords = e.latlng;
                     pickupMarker.setLatLng(pickupCoords);
                     setModeClick = 'dropoff';
-                    showToast("Pickup location set! Now click on map for Delivery Destination.", "info");
+                    showToast("Pickup location pinned! Now tap map for Destination.", "info");
                 } else {
                     dropoffCoords = e.latlng;
                     dropoffMarker.setLatLng(dropoffCoords);
                     setModeClick = 'pickup';
-                    showToast("Destination location set!", "success");
+                    showToast("Destination pinned in Ashanti Region!", "success");
                 }
                 updateRoute();
             });
@@ -267,7 +270,7 @@
             updateRoute();
         }
 
-        // Draw polyline and calculate distance using Haversine algorithm
+        // Draw polyline route and calculate distance
         function updateRoute() {
             if (routePolyline) map.removeLayer(routePolyline);
 
@@ -277,7 +280,7 @@
             ];
 
             routePolyline = L.polyline(latlngs, {color: '#2563eb', weight: 4, dashArray: '8, 8'}).addTo(map);
-            map.fitBounds(routePolyline.getBounds(), {padding: [30, 30]});
+            map.fitBounds(routePolyline.getBounds(), {padding: [35, 35]});
 
             // Distance calculation
             currentDistanceKm = calculateHaversineDistance(
@@ -291,7 +294,7 @@
 
         // Haversine formula calculation in kilometers
         function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Radius of Earth in km
+            const R = 6371; // Earth radius in km
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = 
@@ -299,26 +302,27 @@
                 Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
                 Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return Math.max(1.0, R * c); // Minimum distance threshold 1km
+            return Math.max(0.5, R * c); // Minimum distance threshold 0.5km
         }
 
-        // Live Rate Calculation
+        // Rate Calculation Formula (Base 15 GHS + GHS 3.5/km * Multiplier)
         function recalculateFare() {
             const pkgType = document.getElementById('package-type').value;
-            let baseFee = 15.00; // Base startup fee in GHS
-            let perKmRate = 3.50; // Per km charge in GHS
+            let baseFee = 15.00;
+            let perKmRate = 3.50;
+            let multiplier = 1.0;
 
-            if (pkgType === 'Fragile Express') baseFee *= 1.25;
-            if (pkgType === 'Heavy Freight') baseFee *= 1.5;
+            if (pkgType === 'Medium Cargo') multiplier = 1.25;
+            if (pkgType === 'Heavy Freight') multiplier = 1.50;
 
-            calculatedPrice = baseFee + (currentDistanceKm * perKmRate);
+            calculatedPrice = (baseFee + (currentDistanceKm * perKmRate)) * multiplier;
             const formatted = calculatedPrice.toFixed(2);
 
             document.getElementById('rate-display').innerText = formatted;
             document.getElementById('btn-amount').innerText = `GHS ${formatted}`;
         }
 
-        // Browser Geolocation
+        // Geolocation for user's location in Ghana
         function getUserLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -330,9 +334,9 @@
                         pickupMarker.setLatLng(pickupCoords);
                         map.setView([pickupCoords.lat, pickupCoords.lng], 14);
                         updateRoute();
-                        showToast("GPS location pinpointed successfully!", "success");
+                        showToast("GPS position set as Pickup!", "success");
                     },
-                    () => showToast("Could not retrieve GPS location. Please select on map.", "error")
+                    () => showToast("Could not retrieve GPS location. Pin on map manually.", "error")
                 );
             } else {
                 showToast("Geolocation is not supported by your browser.", "error");
@@ -352,9 +356,9 @@
                 email: email,
                 amount: amountInPesewas,
                 currency: 'GHS',
-                ref: 'SWIFT_' + Math.floor((Math.random() * 1000000000) + 1),
+                ref: 'SWIFT_KSI_' + Math.floor((Math.random() * 100000000) + 1),
                 callback: function(response) {
-                    showToast('Payment successful! Dispatching order...', 'success');
+                    showToast('Payment successful! Order dispatched to Ashanti fleet.', 'success');
                     saveOrderToDatabase({
                         reference: response.reference,
                         email: email,
@@ -395,9 +399,8 @@
             }
         }
 
-        // Sync local storage with server API fallback
+        // Database/LocalStorage Synchronization
         async function saveOrderToDatabase(orderData) {
-            // First attempt live Express REST API call
             try {
                 await fetch('/api/orders', {
                     method: 'POST',
@@ -405,10 +408,9 @@
                     body: JSON.stringify(orderData)
                 });
             } catch(e) {
-                console.log('Backend offline, defaulting to Local DB store.');
+                console.log('Backend server offline, storing order locally.');
             }
 
-            // Always store in local state for persistence
             let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
             orders.unshift(orderData);
             localStorage.setItem('swift_orders', JSON.stringify(orders));
@@ -432,11 +434,11 @@
             const orders = await getOrdersFromStorage();
 
             if (orders.length === 0) {
-                queueEl.innerHTML = `<div class="text-center py-8 text-slate-500 text-sm">No active dispatch orders in queue.</div>`;
+                queueEl.innerHTML = `<div class="text-center py-8 text-slate-500 text-sm">No active dispatch orders in Ashanti region.</div>`;
                 return;
             }
 
-            queueEl.innerHTML = orders.map((ord, idx) => `
+            queueEl.innerHTML = orders.map((ord) => `
                 <div class="bg-[#1f2937] p-4 rounded-xl border border-gray-700 flex flex-col gap-2">
                     <div class="flex justify-between items-start">
                         <div>
@@ -475,16 +477,15 @@
             }
         }
 
-        // Live Driver Marker Movement Simulation
+        // Live Driver Marker Movement Simulation across Kumasi
         async function simulateDriverDispatch(ref) {
             let orders = await getOrdersFromStorage();
             let targetOrder = orders.find(o => o.reference === ref);
 
             if (!targetOrder) return;
 
-            // Switch to customer view map to follow live driver
             switchMode('customer');
-            showToast(`Driver assigned to order ${ref}! Watch live movement on map.`, "info");
+            showToast(`Driver assigned in Kumasi! Live route tracking active.`, "info");
 
             targetOrder.status = 'Driver En Route';
             updateOrderStatus(ref, 'Driver En Route');
@@ -500,9 +501,9 @@
             const end = targetOrder.coords ? targetOrder.coords.dropoff : dropoffCoords;
 
             driverMarker = L.marker([start.lat, start.lng], {icon: motorIcon}).addTo(map)
-                .bindPopup("Driver assigned! Delivering...").openPopup();
+                .bindPopup("Driver assigned! En route...").openPopup();
 
-            let steps = 30;
+            let steps = 35;
             let currentStep = 0;
 
             let interval = setInterval(() => {
@@ -516,9 +517,9 @@
                     clearInterval(interval);
                     showToast(`Delivery completed for ${ref}!`, "success");
                     updateOrderStatus(ref, 'Completed');
-                    driverMarker.getPopup().setContent("Package Successfully Delivered!").openPopup();
+                    driverMarker.getPopup().setContent("Package Delivered in Kumasi!").openPopup();
                 }
-            }, 300);
+            }, 250);
         }
 
         function updateOrderStatus(ref, status) {
@@ -528,7 +529,6 @@
                 orders[idx].status = status;
                 localStorage.setItem('swift_orders', JSON.stringify(orders));
             }
-            // Send update to database API if reachable
             fetch(`/api/driver/order/${ref}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -536,7 +536,6 @@
             }).catch(() => {});
         }
 
-        // Utility Toast function
         function showToast(msg, type) {
             const toast = document.getElementById('toast');
             toast.classList.remove('hidden', 'bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/30', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/30', 'bg-blue-500/10', 'text-blue-400', 'border-blue-500/30');
