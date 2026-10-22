@@ -3,558 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swift Dispatch - Kumasi & Ashanti Region</title>
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Leaflet JS & CSS for Map Rendering -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Paystack Inline SDK -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-
+    <title>Swift Dispatch - Logistics & Delivery</title>
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {
-            background-color: #f8fafc;
-            color: #0f172a;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        /* Clean Map Styling */
-        .leaflet-container {
-            background-color: #f1f5f9 !important;
-            z-index: 1;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #f8fafc; color: #0f172a; display: flex; flex-direction: column; height: 100vh; }
         
-        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-            background: #ffffff;
-            color: #0f172a;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
+        /* Header Navigation */
+        .navbar { background: #1e293b; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .nav-tabs { display: flex; gap: 8px; }
+        .tab-btn { background: #334155; color: #cbd5e1; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .tab-btn.active { background: #2563eb; color: white; }
 
-        /* Modern Custom Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
+        /* Main Container */
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+        
+        /* Map Container */
+        #map { flex: 1; width: 100%; min-height: 250px; z-index: 1; }
 
-        /* Route vertical connecting line styling */
-        .route-connector {
-            position: relative;
-        }
-        .route-connector::before {
-            content: '';
-            position: absolute;
-            left: 17px;
-            top: 28px;
-            bottom: 28px;
-            width: 2px;
-            background-color: #10b981;
-            z-index: 1;
-        }
+        /* Booking Overlay Panel */
+        .panel { background: white; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 2; max-height: 60vh; overflow-y: auto; }
+        
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
+        input:focus { border-color: #2563eb; }
 
-        .custom-map-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .route-box { background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 12px; }
+        .price-tag { font-size: 20px; font-weight: 800; color: #16a34a; text-align: right; }
+
+        .btn-pay { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .btn-pay:hover { background: #1d4ed8; }
+
+        /* Views */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        
+        /* Admin / Driver Management */
+        .admin-card { background: white; margin: 15px; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .driver-list-item { padding: 10px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
-<body class="min-h-screen flex justify-center bg-slate-100">
+<body>
 
-    <div class="w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl relative">
-
-        <!-- Top Navigation Header -->
-        <header class="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white sticky top-0 z-30">
-            <button onclick="resetSelection()" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-700 transition">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <h1 class="text-lg font-bold text-slate-900">Route</h1>
-            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-                <button id="mode-cust" onclick="switchTab('customer')" class="px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-slate-900">Book</button>
-                <button id="mode-admin" onclick="switchTab('admin')" class="px-3 py-1 text-xs font-bold rounded-md text-slate-500 hover:text-slate-900">Fleet</button>
-            </div>
-        </header>
-
-        <!-- Notification Toast -->
-        <div id="toast" class="hidden mx-4 mt-3 p-3 rounded-xl text-xs font-semibold border transition-all duration-300 z-30"></div>
-
-        <!-- ================= CUSTOMER VIEW ================= -->
-        <div id="view-customer" class="flex-1 flex flex-col">
-
-            <!-- Route Input Box (Matching User Image Reference) -->
-            <div class="p-4 bg-white border-b border-slate-100">
-                <div class="border-2 border-emerald-600 rounded-2xl p-3 bg-white route-connector flex flex-col gap-2 relative shadow-sm">
-                    
-                    <!-- Pickup Input -->
-                    <div class="flex items-center gap-3 relative z-10">
-                        <div class="w-7 h-7 rounded-full border-2 border-emerald-600 flex items-center justify-center bg-white shrink-0">
-                            <div class="w-2.5 h-2.5 bg-emerald-600 rounded-full"></div>
-                        </div>
-                        <input type="text" id="pickup-input" value="Kejetia Market, Kumasi" readonly
-                               onclick="activateField('pickup')"
-                               class="w-full text-slate-900 font-semibold text-sm bg-transparent border-b border-slate-100 pb-1.5 focus:outline-none cursor-pointer">
-                        <button onclick="useCurrentGPS()" title="Use GPS" class="text-emerald-600 hover:bg-emerald-50 p-1.5 rounded-lg text-xs font-bold shrink-0">
-                            <i class="fa-solid fa-crosshairs text-sm"></i>
-                        </button>
-                    </div>
-
-                    <!-- Dropoff Input -->
-                    <div class="flex items-center gap-3 relative z-10">
-                        <div class="w-7 h-7 rounded-full border-2 border-slate-800 flex items-center justify-center bg-white shrink-0">
-                            <div class="w-2.5 h-2.5 bg-slate-900 rounded-full"></div>
-                        </div>
-                        <input type="text" id="dropoff-input" placeholder="Dropoff location" readonly
-                               onclick="activateField('dropoff')"
-                               class="w-full text-slate-900 font-semibold text-sm bg-transparent focus:outline-none cursor-pointer">
-                        <div class="flex items-center gap-1">
-                            <button onclick="swapLocations()" class="text-slate-400 hover:text-slate-700 p-1">
-                                <i class="fa-solid fa-arrow-down-up-across-line text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Clean Map Section -->
-            <div class="relative w-full h-52 bg-slate-100 border-b border-slate-100">
-                <div id="map" class="w-full h-full"></div>
-                <div class="absolute bottom-2 right-2 z-20 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-700 shadow-sm">
-                    <span id="map-dist">0.0 mi</span> • <span id="map-fare">GHS 15.00</span>
-                </div>
-            </div>
-
-            <!-- Popular Kumasi Landmarks List (From User Screenshot) -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-2 bg-white">
-                <div class="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Suggested Locations</div>
-                <div id="landmark-list" class="divide-y divide-slate-100">
-                    <!-- Dynamic Kumasi landmark items populated by JS -->
-                </div>
-            </div>
-
-            <!-- Booking & Checkout Bottom Panel -->
-            <div class="p-4 bg-white border-t border-slate-100 shadow-lg">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <span class="text-xs text-slate-400 block font-medium">Recipient / Details</span>
-                        <input type="text" id="cust-email" value="customer@gmail.com" placeholder="Email for payment" class="text-xs font-semibold text-slate-800 border-b border-slate-200 focus:outline-none focus:border-emerald-600">
-                    </div>
-                    <select id="package-type" onchange="recalculateFare()" class="text-xs font-bold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800">
-                        <option value="Standard">Standard Package (1.0x)</option>
-                        <option value="Medium">Medium Cargo (1.25x)</option>
-                        <option value="Heavy">Heavy Freight (1.5x)</option>
-                    </select>
-                </div>
-
-                <button id="pay-btn" onclick="initiatePaystack()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>CONFIRM & PAY (<span id="btn-fare-amount">GHS 15.00</span>)</span>
-                </button>
-            </div>
-
+    <!-- Top Navigation Bar -->
+    <div class="navbar">
+        <div class="brand">⚡ Swift Dispatch</div>
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tab-cust-btn" onclick="switchTab('customer')">Customer</button>
+            <button class="tab-btn" id="tab-admin-btn" onclick="switchTab('admin')">Admin & Drivers</button>
         </div>
-
-        <!-- ================= ADMIN / FLEET VIEW ================= -->
-        <div id="view-admin" class="hidden flex-1 flex-col p-4 bg-slate-50 overflow-y-auto custom-scrollbar">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-base font-bold text-slate-900">Ashanti Active Fleet</h2>
-                    <p class="text-xs text-slate-500">Live Dispatches & Order Management</p>
-                </div>
-                <button onclick="renderFleetOrders()" class="text-xs font-bold bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg shadow-sm hover:bg-slate-50">
-                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
-                </button>
-            </div>
-
-            <div id="fleet-queue" class="flex flex-col gap-3">
-                <!-- Fleet items injected here -->
-            </div>
-        </div>
-
     </div>
 
-    <script>
-        // Config & Key Details
-        const PAYSTACK_PUBLIC_KEY = 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee';
-        const KUMASI_CENTER = { lat: 6.6885, lng: -1.6244 };
+    <!-- Customer Dispatch View -->
+    <div id="customer-view" class="main-content view-section active">
+        <!-- Interactive Kumasi Map -->
+        <div id="map"></div>
 
-        // Real Kumasi Landmarks List (Matching User Screenshot)
-        const KUMASI_LANDMARKS = [
-            { name: 'Asafo VIP Station', address: 'Afia Kobi Ampem Avenue, Kumasi', lat: 6.6860, lng: -1.6160, icon: 'fa-location-dot', distanceMi: '7.6 mi' },
-            { name: 'Kumasi City Mall', address: 'Old Bekwai Road, Kumasi', lat: 6.6690, lng: -1.6120, icon: 'fa-bag-shopping', distanceMi: '8.4 mi' },
-            { name: 'Santasi Roundabout', address: 'Kumasi', lat: 6.6630, lng: -1.6480, icon: 'fa-location-dot', distanceMi: '6.3 mi' },
-            { name: 'Kejetia Market', address: 'Kejetia Road, Kumasi', lat: 6.6960, lng: -1.6210, icon: 'fa-bag-shopping', distanceMi: '6.7 mi' },
-            { name: 'Sofoline Trotro Station', address: 'Pine Avenue, Kumasi', lat: 6.6980, lng: -1.6540, icon: 'fa-bus', distanceMi: '5.1 mi' },
-            { name: 'Abuakwa Police station', address: 'Atwima', lat: 6.6950, lng: -1.7120, icon: 'fa-building-columns', distanceMi: '1.2 mi' },
-            { name: 'Tech Junction', address: 'KNUST, Kumasi', lat: 6.6740, lng: -1.5690, icon: 'fa-location-dot', distanceMi: '10.3 mi' },
-            { name: 'Ahodwo Roundabout Goil Station', address: 'Kumasi', lat: 6.6660, lng: -1.6230, icon: 'fa-location-dot', distanceMi: '7.8 mi' },
-            { name: 'Santasi bus station', address: 'Kumasi', lat: 6.6610, lng: -1.6490, icon: 'fa-bus', distanceMi: '6.8 mi' },
-            { name: 'SG Mall', address: 'Kumasi', lat: 6.6810, lng: -1.6100, icon: 'fa-bag-shopping', distanceMi: '9.9 mi' }
-        ];
-
-        let activeFieldType = 'dropoff'; // 'pickup' or 'dropoff'
-        let currentPickup = { name: 'Kejetia Market, Kumasi', lat: 6.6960, lng: -1.6210 };
-        let currentDropoff = null;
-
-        let map, pickupMarker, dropoffMarker, routePolyline, driverMarker;
-        let calculatedFareGHS = 15.00;
-        let calculatedDistanceMiles = 0;
-
-        window.onload = function() {
-            initCleanMap();
-            renderLandmarkList();
-            recalculateFare();
-        };
-
-        // Initialize Clean CartoDB Positron Map Centered on Kumasi
-        function initCleanMap() {
-            map = L.map('map', {
-                zoomControl: false,
-                attributionControl: false
-            }).setView([KUMASI_CENTER.lat, KUMASI_CENTER.lng], 13);
-
-            // High Quality Light Vector Tiles (Bolt/Yango look)
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                maxZoom: 19
-            }).addTo(map);
-
-            // Green Pickup Marker Icon
-            const greenIcon = L.divIcon({
-                html: '<div class="w-6 h-6 rounded-full bg-emerald-600 border-2 border-white shadow-md flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-circle"></i></div>',
-                className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 12]
-            });
-
-            // Black Dropoff Marker Icon
-            const blackIcon = L.divIcon({
-                html: '<div class="w-6 h-6 rounded-full bg-slate-900 border-2 border-white shadow-md flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-location-dot"></i></div>',
-                className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 24]
-            });
-
-            pickupMarker = L.marker([currentPickup.lat, currentPickup.lng], {icon: greenIcon}).addTo(map);
-
-            // Default dropoff setup
-            currentDropoff = KUMASI_LANDMARKS[6]; // Tech Junction default
-            document.getElementById('dropoff-input').value = currentDropoff.name;
-            dropoffMarker = L.marker([currentDropoff.lat, currentDropoff.lng], {icon: blackIcon}).addTo(map);
-
-            updateRouteOnMap();
-        }
-
-        // Render suggested Kumasi locations list
-        function renderLandmarkList() {
-            const container = document.getElementById('landmark-list');
-            container.innerHTML = KUMASI_LANDMARKS.map((item, index) => `
-                <div onclick="selectLandmark(${index})" class="flex items-center justify-between p-3.5 hover:bg-slate-50 cursor-pointer transition active:bg-slate-100">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
-                            <i class="fa-solid ${item.icon} text-sm"></i>
-                        </div>
-                        <div>
-                            <div class="text-sm font-bold text-slate-900 leading-snug">${item.name}</div>
-                            <div class="text-xs text-slate-400 leading-tight">${item.address}</div>
-                        </div>
-                    </div>
-                    <div class="text-xs font-semibold text-slate-400 shrink-0 ml-2">
-                        ${item.distanceMi}
-                    </div>
+        <!-- Booking Form Panel -->
+        <div class="panel">
+            <div class="route-box">
+                <div class="form-group">
+                    <label>Your Email Address</label>
+                    <input type="email" id="cust-email" placeholder="e.g. felix@gmail.com" required>
                 </div>
-            `).join('');
+                <div class="form-group">
+                    <label>Your Phone Number</label>
+                    <input type="tel" id="cust-phone" placeholder="e.g. 0598211347" required>
+                </div>
+                <div class="form-group">
+                    <label>Pickup Location</label>
+                    <input type="text" id="pickup-loc" value="Manhyia, Kumasi" required>
+                </div>
+                <div class="form-group">
+                    <label>Delivery Destination</label>
+                    <input type="text" id="dropoff-loc" placeholder="e.g. KNUST Campus, Kumasi" value="KNUST, Kumasi" required>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <div><span style="font-size: 12px; color: #64748b;">Estimated Delivery Fee</span></div>
+                    <div class="price-tag">GHS <span id="calc-price">25.00</span></div>
+                </div>
+            </div>
+
+            <button type="button" class="btn-pay" onclick="triggerPaystackPayment()">PAY WITH MOBILE MONEY</button>
+        </div>
+    </div>
+
+    <!-- Admin & Drivers View -->
+    <div id="admin-view" class="view-section">
+        <div class="admin-card">
+            <h3>Register New Driver</h3>
+            <form id="driver-reg-form" onsubmit="registerDriver(event)" style="margin-top: 10px;">
+                <div class="form-group">
+                    <label>Driver Full Name</label>
+                    <input type="text" id="drv-name" placeholder="Kwame Mensah" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="drv-phone" placeholder="024XXXXXXX" required>
+                </div>
+                <div class="form-group">
+                    <label>Motorbike / Vehicle Reg Number</label>
+                    <input type="text" id="drv-plate" placeholder="M-24-AS 1024" required>
+                </div>
+                <button type="submit" class="btn-pay" style="background: #16a34a; padding: 10px;">Register Driver</button>
+            </form>
+        </div>
+
+        <div class="admin-card">
+            <h3>Registered Drivers</h3>
+            <div id="drivers-container">
+                <p style="color: #64748b; font-size: 13px; margin-top: 8px;">No drivers registered yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet Map JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Paystack Inline JS -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+
+    <script>
+        // Initialize Map centered on Kumasi, Ghana
+        let map = L.map('map').setView([6.6885, -1.6244], 13);
+        
+        // Use clean CartoDB map tile theme
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add default marker for Kumasi
+        L.marker([6.6885, -1.6244]).addTo(map).bindPopup('Kumasi Central').openPopup();
+
+        // Distance & Rate Calculator Heuristic
+        function calculateDeliveryRate() {
+            const pickup = document.getElementById('pickup-loc').value.trim();
+            const dropoff = document.getElementById('dropoff-loc').value.trim();
+            
+            let price = 20.00;
+            if (pickup.toLowerCase() !== dropoff.toLowerCase() && dropoff.length > 2) {
+                price = 30.00; // Standard inter-suburb Kumasi dispatch rate
+            }
+            
+            document.getElementById('calc-price').innerText = price.toFixed(2);
+            return price;
         }
 
-        function activateField(type) {
-            activeFieldType = type;
-            if (type === 'pickup') {
-                showToast("Select a location below to set as PICKUP point", "info");
+        document.getElementById('pickup-loc').addEventListener('input', calculateDeliveryRate);
+        document.getElementById('dropoff-loc').addEventListener('input', calculateDeliveryRate);
+
+        // Tab Switcher
+        function switchTab(tab) {
+            document.getElementById('customer-view').classList.remove('active');
+            document.getElementById('admin-view').classList.remove('active');
+            document.getElementById('tab-cust-btn').classList.remove('active');
+            document.getElementById('tab-admin-btn').classList.remove('active');
+
+            if (tab === 'customer') {
+                document.getElementById('customer-view').classList.add('active');
+                document.getElementById('tab-cust-btn').classList.add('active');
+                setTimeout(() => map.invalidateSize(), 200);
             } else {
-                showToast("Select a location below to set as DROPOFF point", "info");
+                document.getElementById('admin-view').classList.add('active');
+                document.getElementById('tab-admin-btn').classList.add('active');
+                renderDriversList();
             }
         }
 
-        function selectLandmark(index) {
-            const landmark = KUMASI_LANDMARKS[index];
-            if (activeFieldType === 'pickup') {
-                currentPickup = { name: landmark.name, lat: landmark.lat, lng: landmark.lng };
-                document.getElementById('pickup-input').value = landmark.name;
-                pickupMarker.setLatLng([landmark.lat, landmark.lng]);
-                activeFieldType = 'dropoff';
-            } else {
-                currentDropoff = { name: landmark.name, lat: landmark.lat, lng: landmark.lng };
-                document.getElementById('dropoff-input').value = landmark.name;
-                dropoffMarker.setLatLng([landmark.lat, landmark.lng]);
-            }
-            updateRouteOnMap();
-        }
+        // Paystack Trigger Function
+        function triggerPaystackPayment() {
+            const email = document.getElementById('cust-email').value;
+            const phone = document.getElementById('cust-phone').value;
+            const priceGHS = calculateDeliveryRate();
 
-        function swapLocations() {
-            if (!currentDropoff) return;
-            const temp = { ...currentPickup };
-            currentPickup = { ...currentDropoff };
-            currentDropoff = temp;
-
-            document.getElementById('pickup-input').value = currentPickup.name;
-            document.getElementById('dropoff-input').value = currentDropoff.name;
-
-            pickupMarker.setLatLng([currentPickup.lat, currentPickup.lng]);
-            dropoffMarker.setLatLng([currentDropoff.lat, currentDropoff.lng]);
-            updateRouteOnMap();
-        }
-
-        // Draw polyline and calculate distance & fare
-        function updateRouteOnMap() {
-            if (!currentPickup || !currentDropoff) return;
-
-            if (routePolyline) map.removeLayer(routePolyline);
-
-            const latlngs = [
-                [currentPickup.lat, currentPickup.lng],
-                [currentDropoff.lat, currentDropoff.lng]
-            ];
-
-            routePolyline = L.polyline(latlngs, {
-                color: '#10b981',
-                weight: 4,
-                opacity: 0.9,
-                dashArray: '6, 6'
-            }).addTo(map);
-
-            map.fitBounds(routePolyline.getBounds(), { padding: [25, 25] });
-
-            // Calculate Distance in Miles & Km
-            const distKm = calculateHaversine(currentPickup.lat, currentPickup.lng, currentDropoff.lat, currentDropoff.lng);
-            calculatedDistanceMiles = (distKm * 0.621371).toFixed(1);
-
-            document.getElementById('map-dist').innerText = `${calculatedDistanceMiles} mi`;
-            recalculateFare(distKm);
-        }
-
-        function calculateHaversine(lat1, lon1, lat2, lon2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return Math.max(0.8, R * c);
-        }
-
-        function recalculateFare(distKm) {
-            if (!distKm) {
-                distKm = calculateHaversine(currentPickup.lat, currentPickup.lng, currentDropoff.lat, currentDropoff.lng);
-            }
-            const pkg = document.getElementById('package-type').value;
-            let mult = 1.0;
-            if (pkg === 'Medium') mult = 1.25;
-            if (pkg === 'Heavy') mult = 1.5;
-
-            const baseFee = 15.00;
-            const perKm = 3.50;
-
-            calculatedFareGHS = (baseFee + (distKm * perKm)) * mult;
-            const formatted = `GHS ${calculatedFareGHS.toFixed(2)}`;
-
-            document.getElementById('map-fare').innerText = formatted;
-            document.getElementById('btn-fare-amount').innerText = formatted;
-        }
-
-        function useCurrentGPS() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    currentPickup = {
-                        name: 'Your Current Location (GPS)',
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude
-                    };
-                    document.getElementById('pickup-input').value = currentPickup.name;
-                    pickupMarker.setLatLng([currentPickup.lat, currentPickup.lng]);
-                    map.setView([currentPickup.lat, currentPickup.lng], 14);
-                    updateRouteOnMap();
-                    showToast("GPS position set as pickup!", "success");
-                }, () => showToast("Could not retrieve GPS location", "error"));
-            }
-        }
-
-        // Paystack SDK Integration
-        function initiatePaystack() {
-            if (!currentDropoff) {
-                showToast("Please select a dropoff location first", "error");
+            if (!email || !phone) {
+                alert('Please enter your email and phone number to continue.');
                 return;
             }
 
-            const email = document.getElementById('cust-email').value || 'customer@gmail.com';
-            const amountInPesewas = Math.round(calculatedFareGHS * 100);
-
+            // Paystack Setup
             let handler = PaystackPop.setup({
-                key: PAYSTACK_PUBLIC_KEY,
+                key: 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee', // Test key (Replace with pk_live_ when Paystack approves account)
                 email: email,
-                amount: amountInPesewas,
+                amount: priceGHS * 100, // Pesewas
                 currency: 'GHS',
-                ref: 'SWIFT_KSI_' + Math.floor((Math.random() * 100000000) + 1),
+                metadata: {
+                    custom_fields: [
+                        { display_name: "Mobile Number", variable_name: "mobile_number", value: phone },
+                        { display_name: "Pickup Location", variable_name: "pickup_location", value: document.getElementById('pickup-loc').value },
+                        { display_name: "Delivery Destination", variable_name: "delivery_destination", value: document.getElementById('dropoff-loc').value }
+                    ]
+                },
                 callback: function(response) {
-                    showToast("Payment successful! Dispatch order placed.", "success");
-                    saveOrder({
-                        reference: response.reference,
-                        email: email,
-                        pickup: currentPickup.name,
-                        dropoff: currentDropoff.name,
-                        amount: calculatedFareGHS.toFixed(2),
-                        coords: { pickup: currentPickup, dropoff: currentDropoff },
-                        status: 'Pending Driver'
-                    });
+                    alert('Payment Successful! Reference: ' + response.reference);
                 },
                 onClose: function() {
-                    showToast("Payment cancelled.", "error");
+                    alert('Payment process canceled.');
                 }
             });
             handler.openIframe();
         }
 
-        async function saveOrder(order) {
-            let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
-            orders.unshift(order);
-            localStorage.setItem('swift_orders', JSON.stringify(orders));
+        // Driver Management Local Storage Logic
+        let driversList = JSON.parse(localStorage.getItem('swift_drivers') || '[]');
 
-            try {
-                await fetch('/api/orders', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(order)
-                });
-            } catch(e) {}
+        function registerDriver(e) {
+            e.preventDefault();
+            const name = document.getElementById('drv-name').value;
+            const phone = document.getElementById('drv-phone').value;
+            const plate = document.getElementById('drv-plate').value;
 
-            switchTab('admin');
+            driversList.push({ id: Date.now(), name, phone, plate });
+            localStorage.setItem('swift_drivers', JSON.stringify(driversList));
+
+            document.getElementById('driver-reg-form').reset();
+            renderDriversList();
+            alert('Driver registered successfully!');
         }
 
-        function switchTab(tab) {
-            const custBtn = document.getElementById('mode-cust');
-            const adminBtn = document.getElementById('mode-admin');
-            const custView = document.getElementById('view-customer');
-            const adminView = document.getElementById('view-admin');
-
-            if (tab === 'customer') {
-                custBtn.className = "px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-slate-900";
-                adminBtn.className = "px-3 py-1 text-xs font-bold rounded-md text-slate-500 hover:text-slate-900";
-                custView.classList.remove('hidden');
-                adminView.classList.add('hidden');
-                setTimeout(() => map.invalidateSize(), 200);
-            } else {
-                adminBtn.className = "px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-slate-900";
-                custBtn.className = "px-3 py-1 text-xs font-bold rounded-md text-slate-500 hover:text-slate-900";
-                adminView.classList.remove('hidden');
-                custView.classList.add('hidden');
-                renderFleetOrders();
-            }
-        }
-
-        function renderFleetOrders() {
-            const queue = document.getElementById('fleet-queue');
-            const orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
-
-            if (orders.length === 0) {
-                queue.innerHTML = `<div class="text-center py-10 text-xs font-semibold text-slate-400">No dispatch orders in Kumasi yet.</div>`;
+        function renderDriversList() {
+            const container = document.getElementById('drivers-container');
+            if (driversList.length === 0) {
+                container.innerHTML = '<p style="color: #64748b; font-size: 13px; margin-top: 8px;">No drivers registered yet.</p>';
                 return;
             }
 
-            queue.innerHTML = orders.map(ord => `
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-xs font-bold text-emerald-600">${ord.reference}</span>
-                            <div class="text-xs font-medium text-slate-500">${ord.email}</div>
-                        </div>
-                        <span class="text-sm font-bold text-slate-900">GHS ${ord.amount}</span>
+            container.innerHTML = driversList.map(d => `
+                <div class="driver-list-item">
+                    <div>
+                        <strong>${d.name}</strong> (${d.plate})<br>
+                        <span style="font-size: 12px; color: #64748b;">Phone: ${d.phone}</span>
                     </div>
-
-                    <div class="text-xs text-slate-600 flex flex-col gap-1 my-1">
-                        <div><i class="fa-solid fa-circle text-emerald-600 mr-1.5 text-[10px]"></i> ${ord.pickup}</div>
-                        <div><i class="fa-solid fa-location-dot text-slate-900 mr-1.5"></i> ${ord.dropoff}</div>
-                    </div>
-
-                    <div class="flex justify-between items-center pt-2 border-t border-slate-100">
-                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${ord.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
-                            ${ord.status}
-                        </span>
-                        ${ord.status !== 'Completed' ? `
-                            <button onclick="dispatchDriverSim('${ord.reference}')" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-xl font-bold transition">
-                                <i class="fa-solid fa-motorcycle mr-1"></i> Dispatch Driver
-                            </button>
-                        ` : '<span class="text-xs font-bold text-emerald-600"><i class="fa-solid fa-check mr-1"></i> Delivered</span>'}
-                    </div>
+                    <span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">Active</span>
                 </div>
             `).join('');
-        }
-
-        function dispatchDriverSim(ref) {
-            const orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
-            const ord = orders.find(o => o.reference === ref);
-            if (!ord) return;
-
-            switchTab('customer');
-            showToast("Driver assigned! Simulating movement on map.", "info");
-
-            const motorIcon = L.divIcon({
-                html: '<div class="w-7 h-7 rounded-full bg-amber-500 border-2 border-white shadow-lg flex items-center justify-center text-white text-xs"><i class="fa-solid fa-motorcycle"></i></div>',
-                className: 'custom-map-icon', iconSize: [28, 28], iconAnchor: [14, 14]
-            });
-
-            if (driverMarker) map.removeLayer(driverMarker);
-
-            const p1 = ord.coords ? ord.coords.pickup : currentPickup;
-            const p2 = ord.coords ? ord.coords.dropoff : currentDropoff;
-
-            driverMarker = L.marker([p1.lat, p1.lng], {icon: motorIcon}).addTo(map);
-
-            let steps = 40;
-            let current = 0;
-
-            let timer = setInterval(() => {
-                current++;
-                let lat = p1.lat + (p2.lat - p1.lat) * (current / steps);
-                let lng = p1.lng + (p2.lng - p1.lng) * (current / steps);
-
-                driverMarker.setLatLng([lat, lng]);
-
-                if (current >= steps) {
-                    clearInterval(timer);
-                    showToast("Package delivered in Kumasi!", "success");
-                    ord.status = 'Completed';
-                    localStorage.setItem('swift_orders', JSON.stringify(orders));
-                }
-            }, 200);
-        }
-
-        function resetSelection() {
-            document.getElementById('dropoff-input').value = '';
-            currentDropoff = null;
-            if (routePolyline) map.removeLayer(routePolyline);
-            document.getElementById('map-dist').innerText = '0.0 mi';
-            document.getElementById('map-fare').innerText = 'GHS 15.00';
-            document.getElementById('btn-fare-amount').innerText = 'GHS 15.00';
-            showToast("Selection cleared. Pick a new dropoff location.", "info");
-        }
-
-        function showToast(msg, type) {
-            const toast = document.getElementById('toast');
-            toast.className = "mx-4 mt-3 p-3 rounded-xl text-xs font-semibold border transition-all duration-300 z-30 " +
-                (type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-                 type === 'error' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-800 border-slate-200');
-            toast.innerText = msg;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 4000);
         }
     </script>
 </body>
 </html>
+
