@@ -1,7 +1,7 @@
 {
   "name": "Swift Dispatch",
   "short_name": "SwiftDispatch",
-  "description": "On-demand logistics, delivery, and fleet management service in Kumasi, Ghana.",
+  "description": "Logistics and delivery platform for Kumasi, Ghana.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b0f19",
@@ -20,5 +20,3 @@
     }
   ]
 }
-
-
