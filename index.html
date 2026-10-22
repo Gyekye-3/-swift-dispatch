@@ -1,92 +1,559 @@
-<!-- Inside your booking form section -->
-<div class="card">
-    <h3>Book Dispatch Service</h3>
-    <div id="dynamic-rate-display">Calculated Rate: GHS <span id="rate-amount">20.00</span></div>
-    
-    <form id="dispatch-form">
-        <label>Customer Email (For Receipt)</label>
-        <input type="email" id="cust-email" value="customer@gmail.com" required>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swift Dispatch - Live Fleet & Dispatch Engine</title>
 
-        <label>Pickup Location</label>
-        <input type="text" id="pickup-loc" placeholder="e.g. Manhyia, Kumasi" required>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-        <label>Delivery Destination</label>
-        <input type="text" id="dropoff-loc" placeholder="e.g. KNUST, Kumasi" required>
+    <!-- Leaflet JS & CSS for Live Interactive Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-        <label>Package Type</label>
-        <select id="package-type">
-            <option value="Parcel Box">Parcel Box (Base 1x)</option>
-            <option value="Heavy Freight">Heavy Freight (Multiplier 1.5x)</option>
-        </select>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        <label>Recipient Phone</label>
-        <input type="text" id="recip-phone" placeholder="+233..." required>
+    <!-- Paystack Inline SDK -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
 
-        <button type="button" id="pay-dispatch-btn" class="btn-primary">PAY & DISPATCH</button>
-    </form>
-</div>
-
-<!-- Include Paystack Script -->
-<script src="https://js.paystack.co/v1/inline.js"></script>
-<script>
-    // Dynamic distance/location price estimator logic
-    function calculatePrice() {
-        const pickup = document.getElementById('pickup-loc').value.trim();
-        const dropoff = document.getElementById('dropoff-loc').value.trim();
-        let baseRate = 20.00; // Base GHS for short local trips
-
-        // Simple heuristic distance/zone estimation for demo/production calculation
-        if (pickup.toLowerCase() !== dropoff.toLowerCase() && dropoff.length > 3) {
-            baseRate = 35.00; // Inter-neighborhood rate
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
+
+        /* Leaflet Dark Custom Styling */
+        .leaflet-container {
+            background-color: #111827 !important;
+            border-radius: 12px;
+            z-index: 10;
+        }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 md:p-6 flex justify-center items-start">
+
+    <div class="w-full max-w-xl flex flex-col gap-5">
+
+        <!-- Top Header -->
+        <header class="flex justify-between items-center bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shadow-md shadow-blue-600/30">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">Swift Dispatch</h1>
+                    <p class="text-xs text-slate-400">Logistics & Live Fleet Engine</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs font-semibold text-emerald-400">Live Neon PG</span>
+            </div>
+        </header>
+
+        <!-- Mode Toggle Tabs -->
+        <div class="flex bg-[#1e293b] p-1.5 rounded-xl border border-slate-800">
+            <button id="tab-cust" onclick="switchMode('customer')" class="flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-blue-600 text-white shadow-md">
+                <i class="fa-solid fa-user-gear mr-2"></i>Customer Mode
+            </button>
+            <button id="tab-admin" onclick="switchMode('admin')" class="flex-1 py-3 px-4 rounded-lg font-semibold text-sm text-slate-400 transition-all duration-200 hover:text-white">
+                <i class="fa-solid fa-truck-fast mr-2"></i>Admin & Drivers
+            </button>
+        </div>
+
+        <!-- Notification Banner -->
+        <div id="toast" class="hidden p-4 rounded-xl text-sm font-medium border transition-all duration-300"></div>
+
+        <!-- ================= CUSTOMER VIEW ================= -->
+        <div id="view-customer" class="flex flex-col gap-5">
+            
+            <!-- Map Container Card -->
+            <div class="glass-card p-4 relative shadow-xl">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400"><i class="fa-solid fa-map-location-dot mr-1"></i> Live Route Planner</span>
+                    <button onclick="getUserLocation()" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20">
+                        <i class="fa-solid fa-location-crosshairs"></i> Use My GPS
+                    </button>
+                </div>
+                <div id="map" class="w-full h-56 rounded-xl border border-gray-800 mb-2"></div>
+                <div class="text-[11px] text-slate-500 text-center italic">
+                    💡 Click on map to auto-set <span class="text-emerald-400 font-semibold">Pickup (1st click)</span> and <span class="text-rose-400 font-semibold">Destination (2nd click)</span>.
+                </div>
+            </div>
+
+            <!-- Booking Details Form -->
+            <div class="glass-card p-5 shadow-xl">
+                <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-800">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Book Dispatch Service</span>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400 block">Distance: <span id="dist-display" class="text-slate-200 font-bold">0.0 km</span></span>
+                        <span class="text-sm font-bold text-blue-400">Estimated Rate: GHS <span id="rate-display">20.00</span></span>
+                    </div>
+                </div>
+
+                <form id="booking-form" onsubmit="event.preventDefault(); initiatePayment();" class="flex flex-col gap-4">
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Customer Email (For Receipt)</label>
+                        <input type="email" id="cust-email" value="customer@gmail.com" required 
+                               class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Pickup Location Name</label>
+                        <div class="relative">
+                            <input type="text" id="pickup-name" value="Warehouse 4, Central Accra" required 
+                                   class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors pl-10">
+                            <i class="fa-solid fa-circle-dot text-emerald-500 absolute left-3.5 top-3.5 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Delivery Destination</label>
+                        <div class="relative">
+                            <input type="text" id="dropoff-name" value="12 Ring Road East, Labone" required 
+                                   class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors pl-10">
+                            <i class="fa-solid fa-location-dot text-rose-500 absolute left-3.5 top-3.5 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Package Type</label>
+                            <select id="package-type" onchange="recalculateFare()" 
+                                    class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-blue-500">
+                                <option value="Parcel Box">Parcel Box (1x)</option>
+                                <option value="Fragile Express">Fragile Express (1.25x)</option>
+                                <option value="Heavy Freight">Heavy Freight (1.5x)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Recipient Phone</label>
+                            <input type="text" id="recip-phone" value="+233 55 000 0000" required 
+                                   class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="pay-btn" 
+                            class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-credit-card"></i> PAY & DISPATCH (<span id="btn-amount">GHS 20.00</span>)
+                    </button>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- ================= ADMIN & DRIVERS VIEW ================= -->
+        <div id="view-admin" class="hidden flex-col gap-5">
+            <div class="glass-card p-5 shadow-xl">
+                <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-800">
+                    <div>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">Fleet Control Center</h2>
+                        <p class="text-xs text-slate-400">Live order queue & active delivery status</p>
+                    </div>
+                    <button onclick="renderAdminOrders()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700 font-semibold text-blue-400">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Sync Orders
+                    </button>
+                </div>
+
+                <div id="order-queue" class="flex flex-col gap-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
+                    <!-- Dynamic Orders loaded here -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GLOBAL CONFIG & STATE ---
+        const PAYSTACK_PUBLIC_KEY = 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee';
         
-        const packageType = document.getElementById('package-type').value;
-        if (packageType === 'Heavy Freight') {
-            baseRate *= 1.5;
+        // Accra central coordinates fallback
+        let pickupCoords = { lat: 5.5600, lng: -0.2050 };
+        let dropoffCoords = { lat: 5.5750, lng: -0.1800 };
+        
+        let map, pickupMarker, dropoffMarker, routePolyline, driverMarker;
+        let setModeClick = 'pickup'; // 'pickup' or 'dropoff'
+        let currentDistanceKm = 3.5;
+        let calculatedPrice = 20.00;
+
+        // Initialize Map & Application
+        window.onload = function() {
+            initMap();
+            recalculateFare();
+            syncLocalData();
+        };
+
+        // Initialize Leaflet Map
+        function initMap() {
+            map = L.map('map').setView([pickupCoords.lat, pickupCoords.lng], 13);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Icon Customizations
+            const greenIcon = L.divIcon({
+                html: '<i class="fa-solid fa-circle-dot text-emerald-500 text-2xl"></i>',
+                className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 12]
+            });
+
+            const redIcon = L.divIcon({
+                html: '<i class="fa-solid fa-location-dot text-rose-500 text-2xl"></i>',
+                className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 24]
+            });
+
+            pickupMarker = L.marker([pickupCoords.lat, pickupCoords.lng], {icon: greenIcon, draggable: true}).addTo(map)
+                .bindPopup('Pickup Location').openPopup();
+
+            dropoffMarker = L.marker([dropoffCoords.lat, dropoffCoords.lng], {icon: redIcon, draggable: true}).addTo(map)
+                .bindPopup('Delivery Destination');
+
+            // Marker Drag Listeners
+            pickupMarker.on('dragend', function(e) {
+                pickupCoords = e.target.getLatLng();
+                updateRoute();
+            });
+
+            dropoffMarker.on('dragend', function(e) {
+                dropoffCoords = e.target.getLatLng();
+                updateRoute();
+            });
+
+            // Map Click Listener to select locations
+            map.on('click', function(e) {
+                if (setModeClick === 'pickup') {
+                    pickupCoords = e.latlng;
+                    pickupMarker.setLatLng(pickupCoords);
+                    setModeClick = 'dropoff';
+                    showToast("Pickup location set! Now click on map for Delivery Destination.", "info");
+                } else {
+                    dropoffCoords = e.latlng;
+                    dropoffMarker.setLatLng(dropoffCoords);
+                    setModeClick = 'pickup';
+                    showToast("Destination location set!", "success");
+                }
+                updateRoute();
+            });
+
+            updateRoute();
         }
 
-        document.getElementById('rate-amount').innerText = baseRate.toFixed(2);
-        return baseRate * 100; // Convert to pesewas for Paystack
-    }
+        // Draw polyline and calculate distance using Haversine algorithm
+        function updateRoute() {
+            if (routePolyline) map.removeLayer(routePolyline);
 
-    document.getElementById('pickup-loc').addEventListener('input', calculatePrice);
-    document.getElementById('dropoff-loc').addEventListener('input', calculatePrice);
-    document.getElementById('package-type').addEventListener('change', calculatePrice);
+            const latlngs = [
+                [pickupCoords.lat, pickupCoords.lng],
+                [dropoffCoords.lat, dropoffCoords.lng]
+            ];
 
-    document.getElementById('pay-dispatch-btn').addEventListener('click', function() {
-        const email = document.getElementById('cust-email').value;
-        const amountInPesewas = calculatePrice();
-        const publicKey = 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee';
+            routePolyline = L.polyline(latlngs, {color: '#2563eb', weight: 4, dashArray: '8, 8'}).addTo(map);
+            map.fitBounds(routePolyline.getBounds(), {padding: [30, 30]});
 
-        let handler = PaystackPop.setup({
-            key: publicKey,
-            email: email,
-            amount: amountInPesewas,
-            currency: 'GHS',
-            callback: function(response) {
-                alert('Payment complete! Reference: ' + response.reference);
-                // Send order data to backend database API
-                recordOrder(response.reference);
-            },
-            onClose: function() {
-                alert('Transaction window closed.');
+            // Distance calculation
+            currentDistanceKm = calculateHaversineDistance(
+                pickupCoords.lat, pickupCoords.lng,
+                dropoffCoords.lat, dropoffCoords.lng
+            );
+
+            document.getElementById('dist-display').innerText = `${currentDistanceKm.toFixed(1)} km`;
+            recalculateFare();
+        }
+
+        // Haversine formula calculation in kilometers
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of Earth in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return Math.max(1.0, R * c); // Minimum distance threshold 1km
+        }
+
+        // Live Rate Calculation
+        function recalculateFare() {
+            const pkgType = document.getElementById('package-type').value;
+            let baseFee = 15.00; // Base startup fee in GHS
+            let perKmRate = 3.50; // Per km charge in GHS
+
+            if (pkgType === 'Fragile Express') baseFee *= 1.25;
+            if (pkgType === 'Heavy Freight') baseFee *= 1.5;
+
+            calculatedPrice = baseFee + (currentDistanceKm * perKmRate);
+            const formatted = calculatedPrice.toFixed(2);
+
+            document.getElementById('rate-display').innerText = formatted;
+            document.getElementById('btn-amount').innerText = `GHS ${formatted}`;
+        }
+
+        // Browser Geolocation
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        pickupCoords = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        pickupMarker.setLatLng(pickupCoords);
+                        map.setView([pickupCoords.lat, pickupCoords.lng], 14);
+                        updateRoute();
+                        showToast("GPS location pinpointed successfully!", "success");
+                    },
+                    () => showToast("Could not retrieve GPS location. Please select on map.", "error")
+                );
+            } else {
+                showToast("Geolocation is not supported by your browser.", "error");
             }
-        });
-        handler.openIframe();
-    });
+        }
 
-    async function recordOrder(reference) {
-        await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                reference: reference,
-                email: document.getElementById('cust-email').value,
-                pickup: document.getElementById('pickup-loc').value,
-                destination: document.getElementById('dropoff-loc').value,
-                amount: document.getElementById('rate-amount').innerText
-            })
-        });
-        window.location.reload();
-    }
-</script>
+        // Paystack Payment Checkout Handler
+        function initiatePayment() {
+            const email = document.getElementById('cust-email').value;
+            const pickupName = document.getElementById('pickup-name').value;
+            const dropoffName = document.getElementById('dropoff-name').value;
+            const recipPhone = document.getElementById('recip-phone').value;
+            const amountInPesewas = Math.round(calculatedPrice * 100);
+
+            let handler = PaystackPop.setup({
+                key: PAYSTACK_PUBLIC_KEY,
+                email: email,
+                amount: amountInPesewas,
+                currency: 'GHS',
+                ref: 'SWIFT_' + Math.floor((Math.random() * 1000000000) + 1),
+                callback: function(response) {
+                    showToast('Payment successful! Dispatching order...', 'success');
+                    saveOrderToDatabase({
+                        reference: response.reference,
+                        email: email,
+                        pickup: pickupName,
+                        destination: dropoffName,
+                        amount: calculatedPrice.toFixed(2),
+                        recipient: recipPhone,
+                        coords: { pickup: pickupCoords, dropoff: dropoffCoords },
+                        status: 'Pending Driver'
+                    });
+                },
+                onClose: function() {
+                    showToast('Payment session canceled.', 'error');
+                }
+            });
+            handler.openIframe();
+        }
+
+        // Mode Navigation Handler
+        function switchMode(mode) {
+            const custTab = document.getElementById('tab-cust');
+            const adminTab = document.getElementById('tab-admin');
+            const custView = document.getElementById('view-customer');
+            const adminView = document.getElementById('view-admin');
+
+            if (mode === 'customer') {
+                custTab.className = "flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-blue-600 text-white shadow-md";
+                adminTab.className = "flex-1 py-3 px-4 rounded-lg font-semibold text-sm text-slate-400 transition-all duration-200 hover:text-white";
+                custView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                setTimeout(() => map.invalidateSize(), 200);
+            } else {
+                adminTab.className = "flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-blue-600 text-white shadow-md";
+                custTab.className = "flex-1 py-3 px-4 rounded-lg font-semibold text-sm text-slate-400 transition-all duration-200 hover:text-white";
+                adminView.classList.remove('hidden');
+                custView.classList.add('hidden');
+                renderAdminOrders();
+            }
+        }
+
+        // Sync local storage with server API fallback
+        async function saveOrderToDatabase(orderData) {
+            // First attempt live Express REST API call
+            try {
+                await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+            } catch(e) {
+                console.log('Backend offline, defaulting to Local DB store.');
+            }
+
+            // Always store in local state for persistence
+            let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
+            orders.unshift(orderData);
+            localStorage.setItem('swift_orders', JSON.stringify(orders));
+
+            switchMode('admin');
+        }
+
+        async function getOrdersFromStorage() {
+            try {
+                const response = await fetch('/api/admin/orders');
+                if (response.ok) {
+                    const dbOrders = await response.json();
+                    if (dbOrders && dbOrders.length > 0) return dbOrders;
+                }
+            } catch(e) {}
+            return JSON.parse(localStorage.getItem('swift_orders') || '[]');
+        }
+
+        async function renderAdminOrders() {
+            const queueEl = document.getElementById('order-queue');
+            const orders = await getOrdersFromStorage();
+
+            if (orders.length === 0) {
+                queueEl.innerHTML = `<div class="text-center py-8 text-slate-500 text-sm">No active dispatch orders in queue.</div>`;
+                return;
+            }
+
+            queueEl.innerHTML = orders.map((ord, idx) => `
+                <div class="bg-[#1f2937] p-4 rounded-xl border border-gray-700 flex flex-col gap-2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs text-blue-400 font-bold">Ref: ${ord.reference}</span>
+                            <div class="text-xs text-slate-300 font-medium mt-0.5">${ord.email}</div>
+                        </div>
+                        <span class="text-sm font-bold text-emerald-400">GHS ${ord.amount}</span>
+                    </div>
+
+                    <div class="text-xs text-slate-400 flex flex-col gap-1 my-1">
+                        <div><i class="fa-solid fa-circle-dot text-emerald-500 mr-1.5"></i> ${ord.pickup}</div>
+                        <div><i class="fa-solid fa-location-dot text-rose-500 mr-1.5"></i> ${ord.destination}</div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-700/60 mt-1">
+                        <span class="text-xs px-2.5 py-1 rounded-md font-bold ${getStatusColor(ord.status)}">
+                            ${ord.status}
+                        </span>
+                        
+                        ${ord.status !== 'Completed' ? `
+                            <button onclick="simulateDriverDispatch('${ord.reference}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors">
+                                <i class="fa-solid fa-motorcycle mr-1"></i> Simulate Dispatch
+                            </button>
+                        ` : '<span class="text-xs text-slate-500 font-semibold"><i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Delivered</span>'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'Pending Driver': return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+                case 'Driver En Route': return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+                case 'Completed': return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                default: return 'bg-slate-700 text-slate-300';
+            }
+        }
+
+        // Live Driver Marker Movement Simulation
+        async function simulateDriverDispatch(ref) {
+            let orders = await getOrdersFromStorage();
+            let targetOrder = orders.find(o => o.reference === ref);
+
+            if (!targetOrder) return;
+
+            // Switch to customer view map to follow live driver
+            switchMode('customer');
+            showToast(`Driver assigned to order ${ref}! Watch live movement on map.`, "info");
+
+            targetOrder.status = 'Driver En Route';
+            updateOrderStatus(ref, 'Driver En Route');
+
+            const motorIcon = L.divIcon({
+                html: '<i class="fa-solid fa-motorcycle text-amber-400 text-2xl"></i>',
+                className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 12]
+            });
+
+            if (driverMarker) map.removeLayer(driverMarker);
+
+            const start = targetOrder.coords ? targetOrder.coords.pickup : pickupCoords;
+            const end = targetOrder.coords ? targetOrder.coords.dropoff : dropoffCoords;
+
+            driverMarker = L.marker([start.lat, start.lng], {icon: motorIcon}).addTo(map)
+                .bindPopup("Driver assigned! Delivering...").openPopup();
+
+            let steps = 30;
+            let currentStep = 0;
+
+            let interval = setInterval(() => {
+                currentStep++;
+                let lat = start.lat + (end.lat - start.lat) * (currentStep / steps);
+                let lng = start.lng + (end.lng - start.lng) * (currentStep / steps);
+
+                driverMarker.setLatLng([lat, lng]);
+
+                if (currentStep >= steps) {
+                    clearInterval(interval);
+                    showToast(`Delivery completed for ${ref}!`, "success");
+                    updateOrderStatus(ref, 'Completed');
+                    driverMarker.getPopup().setContent("Package Successfully Delivered!").openPopup();
+                }
+            }, 300);
+        }
+
+        function updateOrderStatus(ref, status) {
+            let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
+            let idx = orders.findIndex(o => o.reference === ref);
+            if (idx !== -1) {
+                orders[idx].status = status;
+                localStorage.setItem('swift_orders', JSON.stringify(orders));
+            }
+            // Send update to database API if reachable
+            fetch(`/api/driver/order/${ref}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status })
+            }).catch(() => {});
+        }
+
+        // Utility Toast function
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('hidden', 'bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/30', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/30', 'bg-blue-500/10', 'text-blue-400', 'border-blue-500/30');
+
+            if (type === 'success') toast.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/30');
+            else if (type === 'error') toast.classList.add('bg-rose-500/10', 'text-rose-400', 'border-rose-500/30');
+            else toast.classList.add('bg-blue-500/10', 'text-blue-400', 'border-blue-500/30');
+
+            toast.innerHTML = msg;
+            setTimeout(() => toast.classList.add('hidden'), 5000);
+        }
+
+        function syncLocalData() {
+            if (!localStorage.getItem('swift_orders')) {
+                localStorage.setItem('swift_orders', JSON.stringify([]));
+            }
+        }
+    </script>
+</body>
+</html>
