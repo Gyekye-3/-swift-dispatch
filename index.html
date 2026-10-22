@@ -20,13 +20,13 @@
 
         /* Navigation Header */
         .navbar { background: #111827; border-bottom: 1px solid #1f2937; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-        .brand { font-size: 19px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #ffffff; letter-spacing: -0.5px; }
+        .brand { font-size: 19px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #ffffff; letter-spacing: -0.5px; cursor: pointer; user-select: none; }
         .brand span { color: #38bdf8; }
         
         .nav-controls { display: flex; gap: 10px; align-items: center; }
         .portal-badge { background: rgba(56, 189, 248, 0.1); color: #38bdf8; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid rgba(56, 189, 248, 0.2); }
-        .btn-switch { background: #1f2937; color: #f8fafc; border: 1px solid #374151; padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
-        .btn-switch:hover { background: #2563eb; border-color: #2563eb; }
+        .btn-switch { background: #dc2626; color: #f8fafc; border: 1px solid #ef4444; padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; display: none; }
+        .btn-switch:hover { background: #b91c1c; }
 
         /* Main View Layouts */
         .app-container { flex: 1; display: flex; flex-direction: column; position: relative; height: calc(100vh - 60px); }
@@ -92,10 +92,10 @@
 
     <!-- Header Navigation -->
     <div class="navbar">
-        <div class="brand">⚡ Swift <span>Dispatch</span></div>
+        <div class="brand" onclick="handleSecretTap()">⚡ Swift <span>Dispatch</span></div>
         <div class="nav-controls">
             <span class="portal-badge" id="portal-indicator">Customer Portal</span>
-            <button class="btn-switch" id="switch-portal-btn" onclick="togglePortal()">Switch to Admin</button>
+            <button class="btn-switch" id="exit-admin-btn" onclick="togglePortal()">Exit Admin</button>
         </div>
     </div>
 
@@ -337,14 +337,33 @@
 
         calculateRoute();
 
+        // Secret 5-Tap Gesture Logic
+        let tapCount = 0;
+        let tapTimer = null;
+
+        function handleSecretTap() {
+            tapCount++;
+            clearTimeout(tapTimer);
+            tapTimer = setTimeout(() => { tapCount = 0; }, 1500);
+
+            if (tapCount === 5) {
+                tapCount = 0;
+                clearTimeout(tapTimer);
+                togglePortal();
+            }
+        }
+
         let isAdminMode = false;
         function togglePortal() {
             if (!isAdminMode) {
                 isAdminMode = true;
                 document.getElementById('portal-indicator').innerText = "Admin Dashboard";
                 document.getElementById('portal-indicator').style.color = "#10b981";
-                document.getElementById('switch-portal-btn').innerText = "Switch to Customer";
+                document.getElementById('portal-indicator').style.borderColor = "rgba(16, 185, 129, 0.3)";
+                document.getElementById('portal-indicator').style.background = "rgba(16, 185, 129, 0.1)";
                 
+                document.getElementById('exit-admin-btn').style.display = "inline-block";
+
                 document.getElementById('customer-view').classList.remove('active');
                 document.getElementById('admin-view').classList.add('active');
                 loadAdminData();
@@ -352,7 +371,10 @@
                 isAdminMode = false;
                 document.getElementById('portal-indicator').innerText = "Customer Portal";
                 document.getElementById('portal-indicator').style.color = "#38bdf8";
-                document.getElementById('switch-portal-btn').innerText = "Switch to Admin";
+                document.getElementById('portal-indicator').style.borderColor = "rgba(56, 189, 248, 0.2)";
+                document.getElementById('portal-indicator').style.background = "rgba(56, 189, 248, 0.1)";
+
+                document.getElementById('exit-admin-btn').style.display = "none";
 
                 document.getElementById('admin-view').classList.remove('active');
                 document.getElementById('customer-view').classList.add('active');
@@ -465,9 +487,12 @@
             }
         }
 
+        // Automatic Cache Bypass (Forces mobile browsers to load new updates directly)
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    registration.unregister();
+                }
             });
         }
     </script>
