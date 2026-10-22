@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swift Dispatch - Ashanti Region Logistics & Fleet Engine</title>
+    <title>Swift Dispatch - Kumasi & Ashanti Region</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Leaflet JS & CSS for Live Interactive Maps -->
+    <!-- Leaflet JS & CSS for Map Rendering -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
@@ -20,336 +20,382 @@
 
     <style>
         body {
-            background-color: #0b0f19;
-            color: #f8fafc;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* Leaflet Dark Custom Styling */
+        /* Clean Map Styling */
         .leaflet-container {
-            background-color: #111827 !important;
-            border-radius: 12px;
-            z-index: 10;
+            background-color: #f1f5f9 !important;
+            z-index: 1;
         }
+        
         .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-            background: #1e293b;
-            color: #f8fafc;
-            border: 1px solid #334155;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
-        /* Glassmorphism Cards */
-        .glass-card {
-            background: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 16px;
-        }
-
+        /* Modern Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: #111827;
+            background: #f1f5f9;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 4px;
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* Route vertical connecting line styling */
+        .route-connector {
+            position: relative;
+        }
+        .route-connector::before {
+            content: '';
+            position: absolute;
+            left: 17px;
+            top: 28px;
+            bottom: 28px;
+            width: 2px;
+            background-color: #10b981;
+            z-index: 1;
+        }
+
+        .custom-map-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
-<body class="min-h-screen p-3 md:p-6 flex justify-center items-start">
+<body class="min-h-screen flex justify-center bg-slate-100">
 
-    <div class="w-full max-w-xl flex flex-col gap-5">
+    <div class="w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl relative">
 
-        <!-- Top Header -->
-        <header class="flex justify-between items-center bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg">
-            <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shadow-md shadow-blue-600/30">
-                    <i class="fa-solid fa-bolt"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight">Swift Dispatch</h1>
-                    <p class="text-xs text-slate-400">Logistics & Fleet Engine • Ashanti Region</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-xs font-semibold text-emerald-400">Live Neon PG</span>
+        <!-- Top Navigation Header -->
+        <header class="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white sticky top-0 z-30">
+            <button onclick="resetSelection()" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-700 transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h1 class="text-lg font-bold text-slate-900">Route</h1>
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                <button id="mode-cust" onclick="switchTab('customer')" class="px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-slate-900">Book</button>
+                <button id="mode-admin" onclick="switchTab('admin')" class="px-3 py-1 text-xs font-bold rounded-md text-slate-500 hover:text-slate-900">Fleet</button>
             </div>
         </header>
 
-        <!-- Mode Toggle Tabs -->
-        <div class="flex bg-[#1e293b] p-1.5 rounded-xl border border-slate-800">
-            <button id="tab-cust" onclick="switchMode('customer')" class="flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-blue-600 text-white shadow-md">
-                <i class="fa-solid fa-user-gear mr-2"></i>Customer Mode
-            </button>
-            <button id="tab-admin" onclick="switchMode('admin')" class="flex-1 py-3 px-4 rounded-lg font-semibold text-sm text-slate-400 transition-all duration-200 hover:text-white">
-                <i class="fa-solid fa-truck-fast mr-2"></i>Admin & Drivers
-            </button>
-        </div>
-
-        <!-- Notification Banner -->
-        <div id="toast" class="hidden p-4 rounded-xl text-sm font-medium border transition-all duration-300"></div>
+        <!-- Notification Toast -->
+        <div id="toast" class="hidden mx-4 mt-3 p-3 rounded-xl text-xs font-semibold border transition-all duration-300 z-30"></div>
 
         <!-- ================= CUSTOMER VIEW ================= -->
-        <div id="view-customer" class="flex flex-col gap-5">
-            
-            <!-- Map Container Card focused on Kumasi / Ashanti -->
-            <div class="glass-card p-4 relative shadow-xl">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
-                        <i class="fa-solid fa-map-location-dot mr-1 text-blue-500"></i> Ashanti Region Route Map
-                    </span>
-                    <button onclick="getUserLocation()" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20 transition-all active:scale-95">
-                        <i class="fa-solid fa-location-crosshairs"></i> Use GPS
-                    </button>
-                </div>
-                <div id="map" class="w-full h-64 rounded-xl border border-gray-800 mb-2"></div>
-                <div class="text-[11px] text-slate-400 text-center italic">
-                    💡 Click points on the map to place <span class="text-emerald-400 font-semibold">Pickup (1st tap)</span> and <span class="text-rose-400 font-semibold">Destination (2nd tap)</span> in Ashanti.
-                </div>
-            </div>
+        <div id="view-customer" class="flex-1 flex flex-col">
 
-            <!-- Booking Details Form -->
-            <div class="glass-card p-5 shadow-xl">
-                <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-800">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Book Dispatch Service</span>
-                    <div class="text-right">
-                        <span class="text-xs text-slate-400 block">Distance: <span id="dist-display" class="text-slate-200 font-bold">4.2 km</span></span>
-                        <span class="text-sm font-bold text-blue-400">Total Rate: GHS <span id="rate-display">29.70</span></span>
-                    </div>
-                </div>
-
-                <form id="booking-form" onsubmit="event.preventDefault(); initiatePayment();" class="flex flex-col gap-4">
+            <!-- Route Input Box (Matching User Image Reference) -->
+            <div class="p-4 bg-white border-b border-slate-100">
+                <div class="border-2 border-emerald-600 rounded-2xl p-3 bg-white route-connector flex flex-col gap-2 relative shadow-sm">
                     
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Customer Email (For Receipt)</label>
-                        <input type="email" id="cust-email" value="customer@gmail.com" required 
-                               class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                    <!-- Pickup Input -->
+                    <div class="flex items-center gap-3 relative z-10">
+                        <div class="w-7 h-7 rounded-full border-2 border-emerald-600 flex items-center justify-center bg-white shrink-0">
+                            <div class="w-2.5 h-2.5 bg-emerald-600 rounded-full"></div>
+                        </div>
+                        <input type="text" id="pickup-input" value="Kejetia Market, Kumasi" readonly
+                               onclick="activateField('pickup')"
+                               class="w-full text-slate-900 font-semibold text-sm bg-transparent border-b border-slate-100 pb-1.5 focus:outline-none cursor-pointer">
+                        <button onclick="useCurrentGPS()" title="Use GPS" class="text-emerald-600 hover:bg-emerald-50 p-1.5 rounded-lg text-xs font-bold shrink-0">
+                            <i class="fa-solid fa-crosshairs text-sm"></i>
+                        </button>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Pickup Location Name</label>
-                        <div class="relative">
-                            <input type="text" id="pickup-name" value="Kejetia Market, Kumasi Central" required 
-                                   class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors pl-10">
-                            <i class="fa-solid fa-circle-dot text-emerald-500 absolute left-3.5 top-3.5 text-sm"></i>
+                    <!-- Dropoff Input -->
+                    <div class="flex items-center gap-3 relative z-10">
+                        <div class="w-7 h-7 rounded-full border-2 border-slate-800 flex items-center justify-center bg-white shrink-0">
+                            <div class="w-2.5 h-2.5 bg-slate-900 rounded-full"></div>
+                        </div>
+                        <input type="text" id="dropoff-input" placeholder="Dropoff location" readonly
+                               onclick="activateField('dropoff')"
+                               class="w-full text-slate-900 font-semibold text-sm bg-transparent focus:outline-none cursor-pointer">
+                        <div class="flex items-center gap-1">
+                            <button onclick="swapLocations()" class="text-slate-400 hover:text-slate-700 p-1">
+                                <i class="fa-solid fa-arrow-down-up-across-line text-sm"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Delivery Destination</label>
-                        <div class="relative">
-                            <input type="text" id="dropoff-name" value="KNUST Commercial Area, Ayeduase" required 
-                                   class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors pl-10">
-                            <i class="fa-solid fa-location-dot text-rose-500 absolute left-3.5 top-3.5 text-sm"></i>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Package Type</label>
-                            <select id="package-type" onchange="recalculateFare()" 
-                                    class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-blue-500">
-                                <option value="Parcel Box">Parcel Box (1.0x)</option>
-                                <option value="Medium Cargo">Medium Cargo (1.25x)</option>
-                                <option value="Heavy Freight">Heavy Freight (1.5x)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Recipient Phone</label>
-                            <input type="text" id="recip-phone" value="+233 24 123 4567" required 
-                                   class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-blue-500">
-                        </div>
-                    </div>
-
-                    <button type="submit" id="pay-btn" 
-                            class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2">
-                        <i class="fa-solid fa-credit-card"></i> PAY & DISPATCH (<span id="btn-amount">GHS 29.70</span>)
-                    </button>
-
-                </form>
+                </div>
             </div>
+
+            <!-- Clean Map Section -->
+            <div class="relative w-full h-52 bg-slate-100 border-b border-slate-100">
+                <div id="map" class="w-full h-full"></div>
+                <div class="absolute bottom-2 right-2 z-20 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-700 shadow-sm">
+                    <span id="map-dist">0.0 mi</span> • <span id="map-fare">GHS 15.00</span>
+                </div>
+            </div>
+
+            <!-- Popular Kumasi Landmarks List (From User Screenshot) -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-2 bg-white">
+                <div class="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Suggested Locations</div>
+                <div id="landmark-list" class="divide-y divide-slate-100">
+                    <!-- Dynamic Kumasi landmark items populated by JS -->
+                </div>
+            </div>
+
+            <!-- Booking & Checkout Bottom Panel -->
+            <div class="p-4 bg-white border-t border-slate-100 shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <span class="text-xs text-slate-400 block font-medium">Recipient / Details</span>
+                        <input type="text" id="cust-email" value="customer@gmail.com" placeholder="Email for payment" class="text-xs font-semibold text-slate-800 border-b border-slate-200 focus:outline-none focus:border-emerald-600">
+                    </div>
+                    <select id="package-type" onchange="recalculateFare()" class="text-xs font-bold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800">
+                        <option value="Standard">Standard Package (1.0x)</option>
+                        <option value="Medium">Medium Cargo (1.25x)</option>
+                        <option value="Heavy">Heavy Freight (1.5x)</option>
+                    </select>
+                </div>
+
+                <button id="pay-btn" onclick="initiatePaystack()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>CONFIRM & PAY (<span id="btn-fare-amount">GHS 15.00</span>)</span>
+                </button>
+            </div>
+
         </div>
 
-        <!-- ================= ADMIN & DRIVERS VIEW ================= -->
-        <div id="view-admin" class="hidden flex-col gap-5">
-            <div class="glass-card p-5 shadow-xl">
-                <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-800">
-                    <div>
-                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">Ashanti Fleet Control</h2>
-                        <p class="text-xs text-slate-400">Active Kumasi Dispatches & Live Driver Queue</p>
-                    </div>
-                    <button onclick="renderAdminOrders()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700 font-semibold text-blue-400">
-                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Sync Orders
-                    </button>
+        <!-- ================= ADMIN / FLEET VIEW ================= -->
+        <div id="view-admin" class="hidden flex-1 flex-col p-4 bg-slate-50 overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Ashanti Active Fleet</h2>
+                    <p class="text-xs text-slate-500">Live Dispatches & Order Management</p>
                 </div>
+                <button onclick="renderFleetOrders()" class="text-xs font-bold bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg shadow-sm hover:bg-slate-50">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
+                </button>
+            </div>
 
-                <div id="order-queue" class="flex flex-col gap-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
-                    <!-- Dynamic Orders loaded here -->
-                </div>
+            <div id="fleet-queue" class="flex flex-col gap-3">
+                <!-- Fleet items injected here -->
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- GLOBAL CONFIG & KUMASI ASHANTI COORDINATES ---
+        // Config & Key Details
         const PAYSTACK_PUBLIC_KEY = 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee';
-        
-        // Original Ashanti Region Default Coordinates (Kejetia Market -> KNUST)
-        const ASHANTI_KUMASI_CENTER = { lat: 6.6885, lng: -1.6244 };
-        let pickupCoords = { lat: 6.6960, lng: -1.6210 };  // Kejetia Market area
-        let dropoffCoords = { lat: 6.6740, lng: -1.5690 }; // KNUST Campus area
-        
-        let map, pickupMarker, dropoffMarker, routePolyline, driverMarker;
-        let setModeClick = 'pickup'; // 'pickup' or 'dropoff'
-        let currentDistanceKm = 4.2;
-        let calculatedPrice = 29.70;
+        const KUMASI_CENTER = { lat: 6.6885, lng: -1.6244 };
 
-        // Initialize Map & Application
+        // Real Kumasi Landmarks List (Matching User Screenshot)
+        const KUMASI_LANDMARKS = [
+            { name: 'Asafo VIP Station', address: 'Afia Kobi Ampem Avenue, Kumasi', lat: 6.6860, lng: -1.6160, icon: 'fa-location-dot', distanceMi: '7.6 mi' },
+            { name: 'Kumasi City Mall', address: 'Old Bekwai Road, Kumasi', lat: 6.6690, lng: -1.6120, icon: 'fa-bag-shopping', distanceMi: '8.4 mi' },
+            { name: 'Santasi Roundabout', address: 'Kumasi', lat: 6.6630, lng: -1.6480, icon: 'fa-location-dot', distanceMi: '6.3 mi' },
+            { name: 'Kejetia Market', address: 'Kejetia Road, Kumasi', lat: 6.6960, lng: -1.6210, icon: 'fa-bag-shopping', distanceMi: '6.7 mi' },
+            { name: 'Sofoline Trotro Station', address: 'Pine Avenue, Kumasi', lat: 6.6980, lng: -1.6540, icon: 'fa-bus', distanceMi: '5.1 mi' },
+            { name: 'Abuakwa Police station', address: 'Atwima', lat: 6.6950, lng: -1.7120, icon: 'fa-building-columns', distanceMi: '1.2 mi' },
+            { name: 'Tech Junction', address: 'KNUST, Kumasi', lat: 6.6740, lng: -1.5690, icon: 'fa-location-dot', distanceMi: '10.3 mi' },
+            { name: 'Ahodwo Roundabout Goil Station', address: 'Kumasi', lat: 6.6660, lng: -1.6230, icon: 'fa-location-dot', distanceMi: '7.8 mi' },
+            { name: 'Santasi bus station', address: 'Kumasi', lat: 6.6610, lng: -1.6490, icon: 'fa-bus', distanceMi: '6.8 mi' },
+            { name: 'SG Mall', address: 'Kumasi', lat: 6.6810, lng: -1.6100, icon: 'fa-bag-shopping', distanceMi: '9.9 mi' }
+        ];
+
+        let activeFieldType = 'dropoff'; // 'pickup' or 'dropoff'
+        let currentPickup = { name: 'Kejetia Market, Kumasi', lat: 6.6960, lng: -1.6210 };
+        let currentDropoff = null;
+
+        let map, pickupMarker, dropoffMarker, routePolyline, driverMarker;
+        let calculatedFareGHS = 15.00;
+        let calculatedDistanceMiles = 0;
+
         window.onload = function() {
-            initMap();
+            initCleanMap();
+            renderLandmarkList();
             recalculateFare();
-            syncLocalData();
         };
 
-        // Initialize Leaflet Map Centered on Ashanti Region / Kumasi
-        function initMap() {
-            map = L.map('map').setView([ASHANTI_KUMASI_CENTER.lat, ASHANTI_KUMASI_CENTER.lng], 13);
+        // Initialize Clean CartoDB Positron Map Centered on Kumasi
+        function initCleanMap() {
+            map = L.map('map', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([KUMASI_CENTER.lat, KUMASI_CENTER.lng], 13);
 
+            // High Quality Light Vector Tiles (Bolt/Yango look)
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
                 maxZoom: 19
             }).addTo(map);
 
-            // Custom Marker Icons
+            // Green Pickup Marker Icon
             const greenIcon = L.divIcon({
-                html: '<i class="fa-solid fa-circle-dot text-emerald-500 text-2xl"></i>',
+                html: '<div class="w-6 h-6 rounded-full bg-emerald-600 border-2 border-white shadow-md flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-circle"></i></div>',
                 className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 12]
             });
 
-            const redIcon = L.divIcon({
-                html: '<i class="fa-solid fa-location-dot text-rose-500 text-2xl"></i>',
+            // Black Dropoff Marker Icon
+            const blackIcon = L.divIcon({
+                html: '<div class="w-6 h-6 rounded-full bg-slate-900 border-2 border-white shadow-md flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-location-dot"></i></div>',
                 className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 24]
             });
 
-            pickupMarker = L.marker([pickupCoords.lat, pickupCoords.lng], {icon: greenIcon, draggable: true}).addTo(map)
-                .bindPopup('Pickup: Kejetia, Kumasi').openPopup();
+            pickupMarker = L.marker([currentPickup.lat, currentPickup.lng], {icon: greenIcon}).addTo(map);
 
-            dropoffMarker = L.marker([dropoffCoords.lat, dropoffCoords.lng], {icon: redIcon, draggable: true}).addTo(map)
-                .bindPopup('Destination: KNUST, Kumasi');
+            // Default dropoff setup
+            currentDropoff = KUMASI_LANDMARKS[6]; // Tech Junction default
+            document.getElementById('dropoff-input').value = currentDropoff.name;
+            dropoffMarker = L.marker([currentDropoff.lat, currentDropoff.lng], {icon: blackIcon}).addTo(map);
 
-            // Marker Drag Listeners
-            pickupMarker.on('dragend', function(e) {
-                pickupCoords = e.target.getLatLng();
-                updateRoute();
-            });
-
-            dropoffMarker.on('dragend', function(e) {
-                dropoffCoords = e.target.getLatLng();
-                updateRoute();
-            });
-
-            // Map Click Listener to select locations anywhere in Ashanti Region
-            map.on('click', function(e) {
-                if (setModeClick === 'pickup') {
-                    pickupCoords = e.latlng;
-                    pickupMarker.setLatLng(pickupCoords);
-                    setModeClick = 'dropoff';
-                    showToast("Pickup location pinned! Now tap map for Destination.", "info");
-                } else {
-                    dropoffCoords = e.latlng;
-                    dropoffMarker.setLatLng(dropoffCoords);
-                    setModeClick = 'pickup';
-                    showToast("Destination pinned in Ashanti Region!", "success");
-                }
-                updateRoute();
-            });
-
-            updateRoute();
+            updateRouteOnMap();
         }
 
-        // Draw polyline route and calculate distance
-        function updateRoute() {
-            if (routePolyline) map.removeLayer(routePolyline);
-
-            const latlngs = [
-                [pickupCoords.lat, pickupCoords.lng],
-                [dropoffCoords.lat, dropoffCoords.lng]
-            ];
-
-            routePolyline = L.polyline(latlngs, {color: '#2563eb', weight: 4, dashArray: '8, 8'}).addTo(map);
-            map.fitBounds(routePolyline.getBounds(), {padding: [35, 35]});
-
-            // Distance calculation
-            currentDistanceKm = calculateHaversineDistance(
-                pickupCoords.lat, pickupCoords.lng,
-                dropoffCoords.lat, dropoffCoords.lng
-            );
-
-            document.getElementById('dist-display').innerText = `${currentDistanceKm.toFixed(1)} km`;
-            recalculateFare();
+        // Render suggested Kumasi locations list
+        function renderLandmarkList() {
+            const container = document.getElementById('landmark-list');
+            container.innerHTML = KUMASI_LANDMARKS.map((item, index) => `
+                <div onclick="selectLandmark(${index})" class="flex items-center justify-between p-3.5 hover:bg-slate-50 cursor-pointer transition active:bg-slate-100">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                            <i class="fa-solid ${item.icon} text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-slate-900 leading-snug">${item.name}</div>
+                            <div class="text-xs text-slate-400 leading-tight">${item.address}</div>
+                        </div>
+                    </div>
+                    <div class="text-xs font-semibold text-slate-400 shrink-0 ml-2">
+                        ${item.distanceMi}
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // Haversine formula calculation in kilometers
-        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Earth radius in km
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return Math.max(0.5, R * c); // Minimum distance threshold 0.5km
-        }
-
-        // Rate Calculation Formula (Base 15 GHS + GHS 3.5/km * Multiplier)
-        function recalculateFare() {
-            const pkgType = document.getElementById('package-type').value;
-            let baseFee = 15.00;
-            let perKmRate = 3.50;
-            let multiplier = 1.0;
-
-            if (pkgType === 'Medium Cargo') multiplier = 1.25;
-            if (pkgType === 'Heavy Freight') multiplier = 1.50;
-
-            calculatedPrice = (baseFee + (currentDistanceKm * perKmRate)) * multiplier;
-            const formatted = calculatedPrice.toFixed(2);
-
-            document.getElementById('rate-display').innerText = formatted;
-            document.getElementById('btn-amount').innerText = `GHS ${formatted}`;
-        }
-
-        // Geolocation for user's location in Ghana
-        function getUserLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        pickupCoords = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        };
-                        pickupMarker.setLatLng(pickupCoords);
-                        map.setView([pickupCoords.lat, pickupCoords.lng], 14);
-                        updateRoute();
-                        showToast("GPS position set as Pickup!", "success");
-                    },
-                    () => showToast("Could not retrieve GPS location. Pin on map manually.", "error")
-                );
+        function activateField(type) {
+            activeFieldType = type;
+            if (type === 'pickup') {
+                showToast("Select a location below to set as PICKUP point", "info");
             } else {
-                showToast("Geolocation is not supported by your browser.", "error");
+                showToast("Select a location below to set as DROPOFF point", "info");
             }
         }
 
-        // Paystack Payment Checkout Handler
-        function initiatePayment() {
-            const email = document.getElementById('cust-email').value;
-            const pickupName = document.getElementById('pickup-name').value;
-            const dropoffName = document.getElementById('dropoff-name').value;
-            const recipPhone = document.getElementById('recip-phone').value;
-            const amountInPesewas = Math.round(calculatedPrice * 100);
+        function selectLandmark(index) {
+            const landmark = KUMASI_LANDMARKS[index];
+            if (activeFieldType === 'pickup') {
+                currentPickup = { name: landmark.name, lat: landmark.lat, lng: landmark.lng };
+                document.getElementById('pickup-input').value = landmark.name;
+                pickupMarker.setLatLng([landmark.lat, landmark.lng]);
+                activeFieldType = 'dropoff';
+            } else {
+                currentDropoff = { name: landmark.name, lat: landmark.lat, lng: landmark.lng };
+                document.getElementById('dropoff-input').value = landmark.name;
+                dropoffMarker.setLatLng([landmark.lat, landmark.lng]);
+            }
+            updateRouteOnMap();
+        }
+
+        function swapLocations() {
+            if (!currentDropoff) return;
+            const temp = { ...currentPickup };
+            currentPickup = { ...currentDropoff };
+            currentDropoff = temp;
+
+            document.getElementById('pickup-input').value = currentPickup.name;
+            document.getElementById('dropoff-input').value = currentDropoff.name;
+
+            pickupMarker.setLatLng([currentPickup.lat, currentPickup.lng]);
+            dropoffMarker.setLatLng([currentDropoff.lat, currentDropoff.lng]);
+            updateRouteOnMap();
+        }
+
+        // Draw polyline and calculate distance & fare
+        function updateRouteOnMap() {
+            if (!currentPickup || !currentDropoff) return;
+
+            if (routePolyline) map.removeLayer(routePolyline);
+
+            const latlngs = [
+                [currentPickup.lat, currentPickup.lng],
+                [currentDropoff.lat, currentDropoff.lng]
+            ];
+
+            routePolyline = L.polyline(latlngs, {
+                color: '#10b981',
+                weight: 4,
+                opacity: 0.9,
+                dashArray: '6, 6'
+            }).addTo(map);
+
+            map.fitBounds(routePolyline.getBounds(), { padding: [25, 25] });
+
+            // Calculate Distance in Miles & Km
+            const distKm = calculateHaversine(currentPickup.lat, currentPickup.lng, currentDropoff.lat, currentDropoff.lng);
+            calculatedDistanceMiles = (distKm * 0.621371).toFixed(1);
+
+            document.getElementById('map-dist').innerText = `${calculatedDistanceMiles} mi`;
+            recalculateFare(distKm);
+        }
+
+        function calculateHaversine(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return Math.max(0.8, R * c);
+        }
+
+        function recalculateFare(distKm) {
+            if (!distKm) {
+                distKm = calculateHaversine(currentPickup.lat, currentPickup.lng, currentDropoff.lat, currentDropoff.lng);
+            }
+            const pkg = document.getElementById('package-type').value;
+            let mult = 1.0;
+            if (pkg === 'Medium') mult = 1.25;
+            if (pkg === 'Heavy') mult = 1.5;
+
+            const baseFee = 15.00;
+            const perKm = 3.50;
+
+            calculatedFareGHS = (baseFee + (distKm * perKm)) * mult;
+            const formatted = `GHS ${calculatedFareGHS.toFixed(2)}`;
+
+            document.getElementById('map-fare').innerText = formatted;
+            document.getElementById('btn-fare-amount').innerText = formatted;
+        }
+
+        function useCurrentGPS() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    currentPickup = {
+                        name: 'Your Current Location (GPS)',
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    };
+                    document.getElementById('pickup-input').value = currentPickup.name;
+                    pickupMarker.setLatLng([currentPickup.lat, currentPickup.lng]);
+                    map.setView([currentPickup.lat, currentPickup.lng], 14);
+                    updateRouteOnMap();
+                    showToast("GPS position set as pickup!", "success");
+                }, () => showToast("Could not retrieve GPS location", "error"));
+            }
+        }
+
+        // Paystack SDK Integration
+        function initiatePaystack() {
+            if (!currentDropoff) {
+                showToast("Please select a dropoff location first", "error");
+                return;
+            }
+
+            const email = document.getElementById('cust-email').value || 'customer@gmail.com';
+            const amountInPesewas = Math.round(calculatedFareGHS * 100);
 
             let handler = PaystackPop.setup({
                 key: PAYSTACK_PUBLIC_KEY,
@@ -358,200 +404,156 @@
                 currency: 'GHS',
                 ref: 'SWIFT_KSI_' + Math.floor((Math.random() * 100000000) + 1),
                 callback: function(response) {
-                    showToast('Payment successful! Order dispatched to Ashanti fleet.', 'success');
-                    saveOrderToDatabase({
+                    showToast("Payment successful! Dispatch order placed.", "success");
+                    saveOrder({
                         reference: response.reference,
                         email: email,
-                        pickup: pickupName,
-                        destination: dropoffName,
-                        amount: calculatedPrice.toFixed(2),
-                        recipient: recipPhone,
-                        coords: { pickup: pickupCoords, dropoff: dropoffCoords },
+                        pickup: currentPickup.name,
+                        dropoff: currentDropoff.name,
+                        amount: calculatedFareGHS.toFixed(2),
+                        coords: { pickup: currentPickup, dropoff: currentDropoff },
                         status: 'Pending Driver'
                     });
                 },
                 onClose: function() {
-                    showToast('Payment session canceled.', 'error');
+                    showToast("Payment cancelled.", "error");
                 }
             });
             handler.openIframe();
         }
 
-        // Mode Navigation Handler
-        function switchMode(mode) {
-            const custTab = document.getElementById('tab-cust');
-            const adminTab = document.getElementById('tab-admin');
-            const custView = document.getElementById('view-customer');
-            const adminView = document.getElementById('view-admin');
+        async function saveOrder(order) {
+            let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
+            orders.unshift(order);
+            localStorage.setItem('swift_orders', JSON.stringify(orders));
 
-            if (mode === 'customer') {
-                custTab.className = "flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-blue-600 text-white shadow-md";
-                adminTab.className = "flex-1 py-3 px-4 rounded-lg font-semibold text-sm text-slate-400 transition-all duration-200 hover:text-white";
-                custView.classList.remove('hidden');
-                adminView.classList.add('hidden');
-                setTimeout(() => map.invalidateSize(), 200);
-            } else {
-                adminTab.className = "flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-blue-600 text-white shadow-md";
-                custTab.className = "flex-1 py-3 px-4 rounded-lg font-semibold text-sm text-slate-400 transition-all duration-200 hover:text-white";
-                adminView.classList.remove('hidden');
-                custView.classList.add('hidden');
-                renderAdminOrders();
-            }
-        }
-
-        // Database/LocalStorage Synchronization
-        async function saveOrderToDatabase(orderData) {
             try {
                 await fetch('/api/orders', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData)
+                    body: JSON.stringify(order)
                 });
-            } catch(e) {
-                console.log('Backend server offline, storing order locally.');
-            }
-
-            let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
-            orders.unshift(orderData);
-            localStorage.setItem('swift_orders', JSON.stringify(orders));
-
-            switchMode('admin');
-        }
-
-        async function getOrdersFromStorage() {
-            try {
-                const response = await fetch('/api/admin/orders');
-                if (response.ok) {
-                    const dbOrders = await response.json();
-                    if (dbOrders && dbOrders.length > 0) return dbOrders;
-                }
             } catch(e) {}
-            return JSON.parse(localStorage.getItem('swift_orders') || '[]');
+
+            switchTab('admin');
         }
 
-        async function renderAdminOrders() {
-            const queueEl = document.getElementById('order-queue');
-            const orders = await getOrdersFromStorage();
+        function switchTab(tab) {
+            const custBtn = document.getElementById('mode-cust');
+            const adminBtn = document.getElementById('mode-admin');
+            const custView = document.getElementById('view-customer');
+            const adminView = document.getElementById('view-admin');
+
+            if (tab === 'customer') {
+                custBtn.className = "px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-slate-900";
+                adminBtn.className = "px-3 py-1 text-xs font-bold rounded-md text-slate-500 hover:text-slate-900";
+                custView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                setTimeout(() => map.invalidateSize(), 200);
+            } else {
+                adminBtn.className = "px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-slate-900";
+                custBtn.className = "px-3 py-1 text-xs font-bold rounded-md text-slate-500 hover:text-slate-900";
+                adminView.classList.remove('hidden');
+                custView.classList.add('hidden');
+                renderFleetOrders();
+            }
+        }
+
+        function renderFleetOrders() {
+            const queue = document.getElementById('fleet-queue');
+            const orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
 
             if (orders.length === 0) {
-                queueEl.innerHTML = `<div class="text-center py-8 text-slate-500 text-sm">No active dispatch orders in Ashanti region.</div>`;
+                queue.innerHTML = `<div class="text-center py-10 text-xs font-semibold text-slate-400">No dispatch orders in Kumasi yet.</div>`;
                 return;
             }
 
-            queueEl.innerHTML = orders.map((ord) => `
-                <div class="bg-[#1f2937] p-4 rounded-xl border border-gray-700 flex flex-col gap-2">
+            queue.innerHTML = orders.map(ord => `
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-2">
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="text-xs text-blue-400 font-bold">Ref: ${ord.reference}</span>
-                            <div class="text-xs text-slate-300 font-medium mt-0.5">${ord.email}</div>
+                            <span class="text-xs font-bold text-emerald-600">${ord.reference}</span>
+                            <div class="text-xs font-medium text-slate-500">${ord.email}</div>
                         </div>
-                        <span class="text-sm font-bold text-emerald-400">GHS ${ord.amount}</span>
+                        <span class="text-sm font-bold text-slate-900">GHS ${ord.amount}</span>
                     </div>
 
-                    <div class="text-xs text-slate-400 flex flex-col gap-1 my-1">
-                        <div><i class="fa-solid fa-circle-dot text-emerald-500 mr-1.5"></i> ${ord.pickup}</div>
-                        <div><i class="fa-solid fa-location-dot text-rose-500 mr-1.5"></i> ${ord.destination}</div>
+                    <div class="text-xs text-slate-600 flex flex-col gap-1 my-1">
+                        <div><i class="fa-solid fa-circle text-emerald-600 mr-1.5 text-[10px]"></i> ${ord.pickup}</div>
+                        <div><i class="fa-solid fa-location-dot text-slate-900 mr-1.5"></i> ${ord.dropoff}</div>
                     </div>
 
-                    <div class="flex justify-between items-center pt-2 border-t border-gray-700/60 mt-1">
-                        <span class="text-xs px-2.5 py-1 rounded-md font-bold ${getStatusColor(ord.status)}">
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${ord.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
                             ${ord.status}
                         </span>
-                        
                         ${ord.status !== 'Completed' ? `
-                            <button onclick="simulateDriverDispatch('${ord.reference}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors">
-                                <i class="fa-solid fa-motorcycle mr-1"></i> Simulate Dispatch
+                            <button onclick="dispatchDriverSim('${ord.reference}')" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-xl font-bold transition">
+                                <i class="fa-solid fa-motorcycle mr-1"></i> Dispatch Driver
                             </button>
-                        ` : '<span class="text-xs text-slate-500 font-semibold"><i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Delivered</span>'}
+                        ` : '<span class="text-xs font-bold text-emerald-600"><i class="fa-solid fa-check mr-1"></i> Delivered</span>'}
                     </div>
                 </div>
             `).join('');
         }
 
-        function getStatusColor(status) {
-            switch(status) {
-                case 'Pending Driver': return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
-                case 'Driver En Route': return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
-                case 'Completed': return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-                default: return 'bg-slate-700 text-slate-300';
-            }
-        }
+        function dispatchDriverSim(ref) {
+            const orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
+            const ord = orders.find(o => o.reference === ref);
+            if (!ord) return;
 
-        // Live Driver Marker Movement Simulation across Kumasi
-        async function simulateDriverDispatch(ref) {
-            let orders = await getOrdersFromStorage();
-            let targetOrder = orders.find(o => o.reference === ref);
-
-            if (!targetOrder) return;
-
-            switchMode('customer');
-            showToast(`Driver assigned in Kumasi! Live route tracking active.`, "info");
-
-            targetOrder.status = 'Driver En Route';
-            updateOrderStatus(ref, 'Driver En Route');
+            switchTab('customer');
+            showToast("Driver assigned! Simulating movement on map.", "info");
 
             const motorIcon = L.divIcon({
-                html: '<i class="fa-solid fa-motorcycle text-amber-400 text-2xl"></i>',
-                className: 'custom-map-icon', iconSize: [24, 24], iconAnchor: [12, 12]
+                html: '<div class="w-7 h-7 rounded-full bg-amber-500 border-2 border-white shadow-lg flex items-center justify-center text-white text-xs"><i class="fa-solid fa-motorcycle"></i></div>',
+                className: 'custom-map-icon', iconSize: [28, 28], iconAnchor: [14, 14]
             });
 
             if (driverMarker) map.removeLayer(driverMarker);
 
-            const start = targetOrder.coords ? targetOrder.coords.pickup : pickupCoords;
-            const end = targetOrder.coords ? targetOrder.coords.dropoff : dropoffCoords;
+            const p1 = ord.coords ? ord.coords.pickup : currentPickup;
+            const p2 = ord.coords ? ord.coords.dropoff : currentDropoff;
 
-            driverMarker = L.marker([start.lat, start.lng], {icon: motorIcon}).addTo(map)
-                .bindPopup("Driver assigned! En route...").openPopup();
+            driverMarker = L.marker([p1.lat, p1.lng], {icon: motorIcon}).addTo(map);
 
-            let steps = 35;
-            let currentStep = 0;
+            let steps = 40;
+            let current = 0;
 
-            let interval = setInterval(() => {
-                currentStep++;
-                let lat = start.lat + (end.lat - start.lat) * (currentStep / steps);
-                let lng = start.lng + (end.lng - start.lng) * (currentStep / steps);
+            let timer = setInterval(() => {
+                current++;
+                let lat = p1.lat + (p2.lat - p1.lat) * (current / steps);
+                let lng = p1.lng + (p2.lng - p1.lng) * (current / steps);
 
                 driverMarker.setLatLng([lat, lng]);
 
-                if (currentStep >= steps) {
-                    clearInterval(interval);
-                    showToast(`Delivery completed for ${ref}!`, "success");
-                    updateOrderStatus(ref, 'Completed');
-                    driverMarker.getPopup().setContent("Package Delivered in Kumasi!").openPopup();
+                if (current >= steps) {
+                    clearInterval(timer);
+                    showToast("Package delivered in Kumasi!", "success");
+                    ord.status = 'Completed';
+                    localStorage.setItem('swift_orders', JSON.stringify(orders));
                 }
-            }, 250);
+            }, 200);
         }
 
-        function updateOrderStatus(ref, status) {
-            let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
-            let idx = orders.findIndex(o => o.reference === ref);
-            if (idx !== -1) {
-                orders[idx].status = status;
-                localStorage.setItem('swift_orders', JSON.stringify(orders));
-            }
-            fetch(`/api/driver/order/${ref}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: status })
-            }).catch(() => {});
+        function resetSelection() {
+            document.getElementById('dropoff-input').value = '';
+            currentDropoff = null;
+            if (routePolyline) map.removeLayer(routePolyline);
+            document.getElementById('map-dist').innerText = '0.0 mi';
+            document.getElementById('map-fare').innerText = 'GHS 15.00';
+            document.getElementById('btn-fare-amount').innerText = 'GHS 15.00';
+            showToast("Selection cleared. Pick a new dropoff location.", "info");
         }
 
         function showToast(msg, type) {
             const toast = document.getElementById('toast');
-            toast.classList.remove('hidden', 'bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/30', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/30', 'bg-blue-500/10', 'text-blue-400', 'border-blue-500/30');
-
-            if (type === 'success') toast.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/30');
-            else if (type === 'error') toast.classList.add('bg-rose-500/10', 'text-rose-400', 'border-rose-500/30');
-            else toast.classList.add('bg-blue-500/10', 'text-blue-400', 'border-blue-500/30');
-
-            toast.innerHTML = msg;
-            setTimeout(() => toast.classList.add('hidden'), 5000);
-        }
-
-        function syncLocalData() {
-            if (!localStorage.getItem('swift_orders')) {
-                localStorage.setItem('swift_orders', JSON.stringify([]));
-            }
+            toast.className = "mx-4 mt-3 p-3 rounded-xl text-xs font-semibold border transition-all duration-300 z-30 " +
+                (type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                 type === 'error' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-800 border-slate-200');
+            toast.innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 4000);
         }
     </script>
 </body>
