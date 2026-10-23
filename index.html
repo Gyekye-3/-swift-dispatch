@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swift Dispatch - Enterprise Logistics Platform</title>
+    <title>Colombos - Enterprise Logistics Platform</title>
 
     <!-- PWA Settings -->
     <meta name="theme-color" content="#2563eb">
@@ -92,7 +92,7 @@
 
     <!-- Header Navigation -->
     <div class="navbar">
-        <div class="brand" onclick="handleSecretTap()">⚡ Swift <span>Dispatch</span></div>
+        <div class="brand" onclick="handleSecretTap()">⚡ <span>Colombos</span></div>
         <div class="nav-controls">
             <span class="portal-badge" id="portal-indicator">Customer Portal</span>
             <button class="btn-switch" id="exit-admin-btn" onclick="togglePortal()">Exit Admin</button>
@@ -220,7 +220,7 @@
     <div class="modal-overlay" id="tracker-modal">
         <div class="modal-card">
             <h3 style="margin-bottom: 6px;">⚡ Live Dispatch Tracker</h3>
-            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 20px;">Ref: <span id="modal-ref-id" style="color:#38bdf8;">#SD-9021</span></p>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 20px;">Ref: <span id="modal-ref-id" style="color:#38bdf8;">#CL-9021</span></p>
             
             <div class="track-step done"><div class="track-dot"></div> Order Received & Paid</div>
             <div class="track-step active"><div class="track-dot"></div> Assigning Nearby Fleet Rider</div>
@@ -400,8 +400,8 @@
                 amount: Math.round(price * 100),
                 currency: 'GHS',
                 callback: function(response) {
-                    let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
-                    const orderRef = response.reference || 'SD-' + Math.floor(1000 + Math.random() * 9000);
+                    let orders = JSON.parse(localStorage.getItem('colombos_orders') || '[]');
+                    const orderRef = response.reference || 'CL-' + Math.floor(1000 + Math.random() * 9000);
                     orders.unshift({
                         ref: orderRef,
                         clientPhone: phone,
@@ -411,7 +411,7 @@
                         amount: price.toFixed(2),
                         assignedDriver: 'Unassigned'
                     });
-                    localStorage.setItem('swift_orders', JSON.stringify(orders));
+                    localStorage.setItem('colombos_orders', JSON.stringify(orders));
 
                     document.getElementById('modal-ref-id').innerText = '#' + orderRef;
                     document.getElementById('tracker-modal').style.display = 'flex';
@@ -424,7 +424,7 @@
             document.getElementById('tracker-modal').style.display = 'none';
         }
 
-        let drivers = JSON.parse(localStorage.getItem('swift_drivers') || '[]');
+        let drivers = JSON.parse(localStorage.getItem('colombos_drivers') || '[]');
 
         function saveDriver(e) {
             e.preventDefault();
@@ -433,16 +433,16 @@
                 phone: document.getElementById('drv-phone').value,
                 plate: document.getElementById('drv-plate').value
             });
-            localStorage.setItem('swift_drivers', JSON.stringify(drivers));
+            localStorage.setItem('colombos_drivers', JSON.stringify(drivers));
             e.target.reset();
             loadAdminData();
             alert('Fleet driver registered successfully!');
         }
 
         function assignDriver(orderIndex, driverName) {
-            let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
+            let orders = JSON.parse(localStorage.getItem('colombos_orders') || '[]');
             orders[orderIndex].assignedDriver = driverName;
-            localStorage.setItem('swift_orders', JSON.stringify(orders));
+            localStorage.setItem('colombos_orders', JSON.stringify(orders));
             loadAdminData();
         }
 
@@ -463,7 +463,7 @@
             }
 
             const ordContainer = document.getElementById('admin-orders-container');
-            let orders = JSON.parse(localStorage.getItem('swift_orders') || '[]');
+            let orders = JSON.parse(localStorage.getItem('colombos_orders') || '[]');
 
             if (orders.length === 0) {
                 ordContainer.innerHTML = '<p style="color: #64748b; font-size: 13px;">No dispatches logged yet.</p>';
@@ -487,7 +487,7 @@
             }
         }
 
-        // Automatic Cache Bypass (Forces mobile browsers to load new updates directly)
+        // Automatic Cache Bypass
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (let registration of registrations) {
@@ -498,3 +498,4 @@
     </script>
 </body>
 </html>
+ Im
