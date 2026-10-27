@@ -104,7 +104,6 @@
         <div id="map"></div>
 
         <div class="booking-panel">
-            <!-- Quick Chips -->
             <label>Popular Pickup Hotspots</label>
             <div class="chip-container">
                 <div class="chip" onclick="setQuickPickup('6.6731,-1.5654')">📍 KNUST</div>
@@ -183,7 +182,6 @@
                     </select>
                 </div>
 
-                <!-- Vehicle Selector Cards -->
                 <label>Select Fleet Ride</label>
                 <div class="vehicle-grid">
                     <div class="vehicle-card active" id="v-bike" onclick="selectVehicle('bike', 1.0)">
@@ -276,7 +274,6 @@
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <script>
-        // Dark Mode Map Initialization (CartoDB Dark Matter Tile)
         let map = L.map('map').setView([6.6885, -1.6244], 13);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
@@ -337,7 +334,7 @@
 
         calculateRoute();
 
-        // Secret 5-Tap Gesture Logic
+        // Secret 5-Tap Gesture
         let tapCount = 0;
         let tapTimer = null;
 
@@ -395,7 +392,8 @@
             }
 
             let handler = PaystackPop.setup({
-                key: 'pk_test_d57bf9fb79bb9eca6b9fac619aeb15243fc0eaee',
+                // REPLACE THIS WITH YOUR PAYSTACK LIVE PUBLIC KEY:
+                key: 'pk_live_YOUR_ACTUAL_LIVE_KEY_HERE',
                 email: email,
                 amount: Math.round(price * 100),
                 currency: 'GHS',
@@ -487,7 +485,6 @@
             }
         }
 
-        // Automatic Cache Bypass
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (let registration of registrations) {
@@ -498,4 +495,4 @@
     </script>
 </body>
 </html>
- Im
+
